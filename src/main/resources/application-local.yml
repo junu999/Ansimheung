@@ -6,8 +6,6 @@ spring:
     username: ansimheung
     password: ansimheung
   jpa:
-    hibernate:
-      ddl-auto: update
     show-sql: true
 
 logging:

@@ -56,6 +56,19 @@ git push -u origin feature/F-ROUTE-01-dijkstra
 - 머지 조건(저장소 규칙으로 강제): PR + 승인 1명 + CI `build` 통과. 본인 PR은 본인이 승인할 수 없음
 - 올리기 전에 로컬에서 `./gradlew test` 한 번 돌려보기
 
+## DB 변경 (Flyway)
+
+- 테이블·컬럼을 바꾸려면 `src/main/resources/db/migration/` 에 **새 파일** `V{다음번호}__설명.sql` 추가 (예: `V2__add_hazard_title.sql`)
+- **이미 머지된 마이그레이션 파일은 절대 수정하지 않기** — 다른 사람 DB와 어긋나서 서버가 안 뜸
+- 번호가 겹치면 나중에 머지하는 사람이 번호를 올림
+- 엔티티를 바꿨으면 마이그레이션도 같은 PR 에 (`ddl-auto: validate` 라 안 맞으면 서버가 안 뜸)
+
+## 오류·정책값
+
+- 오류는 `throw new ApiException(ErrorCode.XXX)` — 직접 `ResponseEntity.status(...)` 로 오류 본문 만들지 않기
+- 새 오류 코드가 필요하면 `ErrorCode` 에 추가하고 노션 "API 공통 규약" 3장 표도 같이 수정
+- 20m·500m·λ·하루 한도 같은 숫자는 `AnsimheungProperties` 로만 읽기
+
 ## 코드 이름
 
 기획서 2장 용어 사전의 영문명을 따릅니다: `Report`, `Hazard`, `Empathy`, `riskScore`, `Node`, `Edge`, `edgeRisk`, `cost`, `lambda`, `status`, `seed`.

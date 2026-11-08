@@ -5,15 +5,24 @@ spring:
     default: local          # 아무 설정 없이 실행하면 local 프로필
   servlet:
     multipart:
-      max-file-size: 5MB
+      max-file-size: 5MB    # P-04 사진 1장 5MB
       max-request-size: 6MB
   jpa:
     open-in-view: false
+    hibernate:
+      ddl-auto: validate    # 테이블은 Flyway(db/migration)가 만들고, JPA 는 맞는지만 확인
     properties:
       hibernate:
         format_sql: true
         jdbc:
           time_zone: Asia/Seoul
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true   # PostGIS 확장 테이블(spatial_ref_sys)이 이미 있는 DB에서도 시작 가능
+    baseline-version: 0         # → V1 부터 적용
+  jackson:
+    time-zone: Asia/Seoul       # 응답 시간은 "2026-11-08T21:30:00+09:00" 형식 (OffsetDateTime 사용)
 
 server:
   port: 8080
@@ -22,5 +31,41 @@ server:
       charset: UTF-8
       force: true
 
-# 서비스 정책값은 코드에 하드코딩하지 않고 여기에 추가합니다 (기획서 8장)
-ansimheung: {}
+# 서비스 정책값 — 노션 "상수(C) · 검증 규칙(V)" 표와 같은 값. 코드에 하드코딩하지 말고 AnsimheungProperties 로 읽기
+ansimheung:
+  area:                          # P-05 시범 지역
+    school-name: 정왕초등학교
+    school-address: 경기 시흥시 중심상가로 257
+    center-lat: 37.3408
+    center-lng: 126.7430
+    radius-m: 500
+  merge:
+    radius-m: 20                 # P-01 중복 묶기 반경
+  risk:
+    recency-max: 1.5             # C-02 최근성 R = max(min, max − 경과일/decay)
+    recency-min: 0.5
+    recency-decay-days: 90
+    empathy-max: 2.0             # C-12 공감도 E = min(max, 1 + log10(n+1))
+    time-match: 1.5              # C-04 시간대 T
+    time-always: 1.2
+    time-other: 1.0
+  limits:
+    reports-per-day: 10          # C-05
+    empathies-per-day: 30        # C-06
+  route:
+    lambda-shortest: 0           # C-07
+    lambda-balanced: 20
+    lambda-safest: 60
+    edge-assign-max-m: 25        # C-09
+    snap-max-m: 50               # C-10
+    walk-m-per-min: 60           # C-11 어린이 보행 속도
+  marker:
+    high-threshold: 3.0          # C-08 (시드 30건 후 상위 30% 기준으로 재조정)
+  hazard:
+    resolved-hide-days: 30       # P-11
+  upload:
+    dir: uploads                 # git 제외 폴더
+    max-long-side-px: 1280       # P-04
+  paging:
+    default-size: 20             # C-14
+    max-size: 100

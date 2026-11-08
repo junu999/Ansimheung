@@ -1,0 +1,37 @@
+{
+  "id": 12,
+  "lat": 37.3413,
+  "lng": 126.7436,
+  "type": "ILLEGAL_PARKING",
+  "timeSlot": "MORNING",
+  "status": "RECEIVED",
+  "score": 6.0,
+  "level": "HIGH",
+  "empathyCount": 3,
+  "reportCount": 2,
+  "myEmpathy": false,
+  "myReported": false,
+  "reports": [
+    {
+      "id": 31,
+      "description": "등교 시간 후문 앞 배송차량이 양쪽에 서 있어요",
+      "createdAt": "2026-11-01T08:12:00+09:00"
+    },
+    {
+      "id": 44,
+      "description": null,
+      "createdAt": "2026-11-05T07:50:00+09:00"
+    }
+  ],
+  "photos": [],
+  "history": [
+    {
+      "fromStatus": null,
+      "toStatus": "RECEIVED",
+      "memo": null,
+      "createdAt": "2026-11-01T08:12:00+09:00"
+    }
+  ],
+  "createdAt": "2026-11-01T08:12:00+09:00",
+  "lastActivityAt": "2026-11-05T07:50:00+09:00"
+}

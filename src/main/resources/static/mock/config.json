@@ -1,0 +1,30 @@
+{
+  "school": {
+    "name": "정왕초등학교",
+    "address": "경기 시흥시 중심상가로 257",
+    "lat": 37.3408,
+    "lng": 126.743
+  },
+  "radiusM": 500,
+  "mergeRadiusM": 20,
+  "markerHighThreshold": 3.0,
+  "routeModes": [
+    {
+      "mode": "SHORTEST",
+      "lambda": 0
+    },
+    {
+      "mode": "BALANCED",
+      "lambda": 20
+    },
+    {
+      "mode": "SAFEST",
+      "lambda": 60
+    }
+  ],
+  "walkMPerMin": 60,
+  "limits": {
+    "reportsPerDay": 10,
+    "empathiesPerDay": 30
+  }
+}
