@@ -1,0 +1,54 @@
+{
+  "counts": {
+    "RECEIVED": 3,
+    "CHECKING": 1,
+    "RESOLVED": 1,
+    "REJECTED": 0,
+    "HIDDEN": 0
+  },
+  "content": [
+    {
+      "id": 12,
+      "type": "ILLEGAL_PARKING",
+      "timeSlot": "MORNING",
+      "status": "RECEIVED",
+      "score": 6.0,
+      "level": "HIGH",
+      "empathyCount": 3,
+      "reportCount": 2,
+      "hidden": false,
+      "createdAt": "2026-11-01T08:12:00+09:00",
+      "lastActivityAt": "2026-11-05T07:50:00+09:00"
+    },
+    {
+      "id": 15,
+      "type": "SPEEDING",
+      "timeSlot": "AFTERNOON",
+      "status": "RECEIVED",
+      "score": 2.4,
+      "level": "MEDIUM",
+      "empathyCount": 1,
+      "reportCount": 1,
+      "hidden": false,
+      "createdAt": "2026-11-01T08:12:00+09:00",
+      "lastActivityAt": "2026-11-05T07:50:00+09:00"
+    },
+    {
+      "id": 21,
+      "type": "POOR_LIGHTING",
+      "timeSlot": "NIGHT",
+      "status": "RECEIVED",
+      "score": 1.4,
+      "level": "MEDIUM",
+      "empathyCount": 0,
+      "reportCount": 1,
+      "hidden": false,
+      "createdAt": "2026-11-01T08:12:00+09:00",
+      "lastActivityAt": "2026-11-05T07:50:00+09:00"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 3,
+  "totalPages": 1
+}

@@ -1,0 +1,30 @@
+{
+  "content": [
+    {
+      "reportId": 31,
+      "hazardId": 12,
+      "type": "ILLEGAL_PARKING",
+      "timeSlot": "MORNING",
+      "status": "RECEIVED",
+      "empathyCount": 3,
+      "lat": 37.3413,
+      "lng": 126.7436,
+      "createdAt": "2026-11-01T08:12:00+09:00"
+    },
+    {
+      "reportId": 28,
+      "hazardId": 7,
+      "type": "SIDEWALK_GAP",
+      "timeSlot": "ALWAYS",
+      "status": "CHECKING",
+      "empathyCount": 5,
+      "lat": 37.3421,
+      "lng": 126.7418,
+      "createdAt": "2026-10-29T16:40:00+09:00"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 2,
+  "totalPages": 1
+}

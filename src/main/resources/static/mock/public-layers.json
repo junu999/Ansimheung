@@ -1,0 +1,31 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7436,
+          37.3412
+        ]
+      },
+      "properties": {
+        "kind": "CCTV"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7424,
+          37.3401
+        ]
+      },
+      "properties": {
+        "kind": "CCTV"
+      }
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "routes": [
+    {
+      "mode": "SHORTEST",
+      "lambda": 0,
+      "distanceM": 340,
+      "minutes": 6,
+      "riskExposure": 5.4,
+      "hazardIds": [
+        7
+      ],
+      "path": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            126.7405,
+            37.3432
+          ],
+          [
+            126.7418,
+            37.3421
+          ],
+          [
+            126.743,
+            37.3408
+          ]
+        ]
+      }
+    },
+    {
+      "mode": "BALANCED",
+      "lambda": 20,
+      "distanceM": 410,
+      "minutes": 7,
+      "riskExposure": 0.0,
+      "hazardIds": [],
+      "path": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            126.7405,
+            37.3432
+          ],
+          [
+            126.7403,
+            37.3415
+          ],
+          [
+            126.7425,
+            37.3405
+          ],
+          [
+            126.743,
+            37.3408
+          ]
+        ]
+      }
+    },
+    {
+      "mode": "SAFEST",
+      "lambda": 60,
+      "distanceM": 410,
+      "minutes": 7,
+      "riskExposure": 0.0,
+      "hazardIds": [],
+      "path": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            126.7405,
+            37.3432
+          ],
+          [
+            126.7403,
+            37.3415
+          ],
+          [
+            126.7425,
+            37.3405
+          ],
+          [
+            126.743,
+            37.3408
+          ]
+        ]
+      }
+    }
+  ]
+}

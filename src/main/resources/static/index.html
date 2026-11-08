@@ -11,7 +11,7 @@
     #status {
       position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1000;
       background: #fff; padding: 8px 14px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.2);
-      font-size: 14px;
+      font-size: 14px; max-width: 90%; text-align: center;
     }
   </style>
 </head>
@@ -21,27 +21,49 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/js/api.js"></script>
   <script>
-    // 시범 지역: 정왕초등학교 (경기 시흥시 중심상가로 257) 반경 500m — 상세 기획서 P-05, 기능 명세서 F-MAP-01
-    const SCHOOL = [37.3408, 126.7430];
-    const PILOT_RADIUS_M = 500;
-
-    const map = L.map('map').setView(SCHOOL, 17);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    L.marker(SCHOOL).addTo(map).bindPopup('정왕초등학교');
-    L.circle(SCHOOL, { radius: PILOT_RADIUS_M, color: '#2563eb', weight: 1, fillOpacity: 0.05 }).addTo(map);
-
-    // 서버 · DB · PostGIS 연결 확인
+    // 개발 환경 확인 화면.
+    // 학교 좌표·반경은 서버 설정(GET /api/config ← application.yml ansimheung.area)에서 받아옴 — 하드코딩 금지
+    // 주소 끝에 ?mock 을 붙이면 가짜 위험 지점 마커도 함께 보여줌 (프론트 작업 확인용)
     const status = document.getElementById('status');
-    api.get('/api/health')
-      .then(data => {
-        status.textContent = data.postgis
-          ? `✅ 서버 · DB · PostGIS ${data.postgis} 연결 완료`
-          : `⚠️ 서버는 켜졌지만 DB 연결 실패: ${data.database}`;
-      })
-      .catch(() => { status.textContent = '❌ 서버에 연결할 수 없습니다'; });
+    const LEVEL_COLOR = { HIGH: '#dc2626', MEDIUM: '#f59e0b', RESOLVED: '#9ca3af' };
+
+    async function start() {
+      const config = await api.get('/api/config');
+      const school = [config.school.lat, config.school.lng];
+
+      const map = L.map('map').setView(school, 17); // F-MAP-01 줌 17
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      L.marker(school).addTo(map).bindPopup(config.school.name);
+      L.circle(school, { radius: config.radiusM, color: '#2563eb', weight: 1, fillOpacity: 0.05 }).addTo(map);
+
+      if (api.isMock) {
+        const hazards = await api.get('/api/hazards?bbox=' + map.getBounds().toBBoxString());
+        L.geoJSON(hazards, {
+          pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+            radius: 9, color: '#fff', weight: 2, fillOpacity: 0.9,
+            fillColor: LEVEL_COLOR[feature.properties.level]
+          }),
+          onEachFeature: (feature, layer) => {
+            const p = feature.properties;
+            layer.bindPopup(`#${p.id} ${p.type} · 점수 ${p.score} · 공감 ${p.empathyCount}`);
+          }
+        }).addTo(map);
+      }
+
+      try {
+        const health = await api.get('/api/health');
+        status.textContent = health.postgis
+          ? `✅ 서버 · DB · PostGIS ${health.postgis} 연결 완료${api.isMock ? ' · 가짜 데이터(mock) 모드' : ''}`
+          : `⚠️ 서버는 켜졌지만 DB 연결 실패: ${health.database}`;
+      } catch (e) {
+        status.textContent = '❌ 서버에 연결할 수 없습니다';
+      }
+    }
+
+    start().catch(() => { status.textContent = '❌ 서버에 연결할 수 없습니다'; });
   </script>
 </body>
 </html>
