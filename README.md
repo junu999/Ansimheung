@@ -4,6 +4,8 @@
 
 학부모가 "집 → 학교" 길을 고를 때 위험 제보가 적은 길을 추천하는 웹서비스 · 팀 S-Link
 
+시범 지역: 경기 시흥시 **정왕초등학교**(중심상가로 257) 반경 500m
+
 | 구분 | 기술 |
 |---|---|
 | Frontend | HTML / CSS / JavaScript, Leaflet + OpenStreetMap (`src/main/resources/static/`) |
@@ -55,7 +57,7 @@ docker compose up -d
 
 ### 5. 확인
 
-브라우저에서 <http://localhost:8080> → 신일초 지도(반경 500m 원) 위에 **"✅ 서버 · DB · PostGIS 3.4 연결 완료"** 가 보이면 끝.
+브라우저에서 <http://localhost:8080> → 정왕초 지도(반경 500m 원) 위에 **"✅ 서버 · DB · PostGIS 3.4 연결 완료"** 가 보이면 끝.
 
 ```bash
 ./gradlew test           # 테스트도 통과해야 함 (DB 켜진 상태에서)

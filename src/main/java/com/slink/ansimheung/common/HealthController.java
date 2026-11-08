@@ -27,10 +27,10 @@ public class HealthController {
         try {
             result.put("database", jdbcTemplate.queryForObject("SELECT version()", String.class));
             result.put("postgis", jdbcTemplate.queryForObject("SELECT PostGIS_Lib_Version()", String.class));
-            // 공간 함수가 실제로 동작하는지: 신일초에서 동쪽으로 약 88m 떨어진 점까지 거리(m)
+            // 공간 함수가 실제로 동작하는지: 정왕초에서 동쪽으로 약 89m 떨어진 점까지 거리(m)
             result.put("postgisDistanceTestM", jdbcTemplate.queryForObject(
-                    "SELECT ROUND(ST_Distance(ST_MakePoint(126.7914, 37.4326)::geography, "
-                            + "ST_MakePoint(126.7924, 37.4326)::geography))", Long.class));
+                    "SELECT ROUND(ST_Distance(ST_MakePoint(126.7430, 37.3408)::geography, "
+                            + "ST_MakePoint(126.7440, 37.3408)::geography))", Long.class));
         } catch (Exception e) {
             result.put("database", "error: " + e.getMessage());
         }
