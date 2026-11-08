@@ -4,7 +4,7 @@
 
 | 브랜치 | 용도 | 규칙 |
 |---|---|---|
-| `main` | 시연·제출용 | 직접 push 금지. `develop`에서 주차 마감 때만 머지 |
+| `main` | 시연·제출용 | 직접 push 금지. `develop` → `main` PR로 주차 마감 때만 머지 |
 | `develop` | 통합 | 직접 push 금지. PR로만 머지 |
 | `feature/{기능ID}-{설명}` | 기능 개발 | `develop`에서 따서 `develop`으로 PR |
 | `fix/{설명}` | 버그 수정 | 위와 같음 |
@@ -29,7 +29,8 @@ git switch -c feature/F-ROUTE-01-dijkstra
 git add .
 git commit -m "feat(route): Dijkstra 경로 탐색 구현"
 git push -u origin feature/F-ROUTE-01-dijkstra
-# GitHub에서 develop 으로 PR 생성 → 1명 승인 → Squash and merge
+# GitHub에서 base: develop 으로 PR 생성 → 팀원 1명 Approve → CI 통과 → Squash and merge
+# 머지되면 원격 브랜치는 자동 삭제 → 로컬 정리: git switch develop && git pull && git fetch --prune
 ```
 
 ## 커밋 메시지
@@ -52,7 +53,8 @@ git push -u origin feature/F-ROUTE-01-dijkstra
 - PR 하나 = 기능 하나. 300줄 넘으면 쪼개기
 - 노션 태스크의 "PR 링크" 칸에 PR 주소 붙이기
 - 리뷰어: 백엔드 PR은 선준우·정지훈 서로, 프론트 PR은 정지훈
-- 머지 전 `./gradlew test` 통과 확인 (GitHub Actions CI가 자동으로도 돌림)
+- 머지 조건(저장소 규칙으로 강제): PR + 승인 1명 + CI `build` 통과. 본인 PR은 본인이 승인할 수 없음
+- 올리기 전에 로컬에서 `./gradlew test` 한 번 돌려보기
 
 ## 코드 이름
 
