@@ -78,7 +78,7 @@ docker compose up -d
 | 하고 싶은 것 | 명령 |
 |---|---|
 | DB 켜기 / 끄기 | `docker compose up -d` / `docker compose down` |
-| DB 초기화 (데이터 전부 삭제) | `docker compose down -v` |
+| DB 초기화 (데이터 전부 삭제) | `docker compose down -v` (다음 서버 실행 때 Flyway 가 테이블을 다시 만듦) |
 | DB 직접 들어가기 | `docker exec -it ansimheung-db psql -U ansimheung` |
 | 서버 실행 | `./gradlew bootRun` |
 | 테스트 | `./gradlew test` |
@@ -91,13 +91,17 @@ docker compose up -d
 ├── http/                       API 호출 테스트 (.http, REST Client 확장)
 ├── src/main/java/com/slink/ansimheung/
 │   ├── AnsimheungApplication.java
-│   ├── config/                 SecurityConfig 등 설정
-│   ├── common/                 공통 (HealthController, 예외 처리)
+│   ├── config/                 SecurityConfig, AnsimheungProperties(정책값)
+│   ├── common/                 HealthController, ConfigController(/api/config)
+│   │   ├── error/              ErrorCode, ApiException, 공통 오류 응답 처리
+│   │   ├── type/               공통 enum (HazardType, TimeSlot, HazardStatus …)
+│   │   └── geo/                PilotArea(시범 지역 검사), GeoUtils
 │   └── (기능별 패키지)          auth/, hazard/, report/, route/, admin/ ... 만들면서 추가
 ├── src/main/resources/
-│   ├── application.yml         공통 설정
+│   ├── db/migration/           Flyway DB 스키마 (V1__init_schema.sql …)
+│   ├── application.yml         공통 설정 + 서비스 정책값(ansimheung.*)
 │   ├── application-local.yml   로컬 DB 접속 정보
-│   └── static/                 프론트 (index.html, js/api.js = API 호출·CSRF 도우미)
+│   └── static/                 프론트 (index.html, js/api.js = API 호출 도우미, mock/ = 가짜 응답)
 └── .github/                    CI, PR · 이슈 템플릿
 ```
 
@@ -111,8 +115,30 @@ docker compose up -d
 | `Connection refused ... 5432` | Docker Desktop 꺼짐 → 켜고 `docker compose up -d` |
 | `port 5432 already in use` | 다른 프로젝트 Postgres(컨테이너 또는 설치본)가 실행 중 → 그걸 끄거나, `docker-compose.yml` 포트를 `"5433:5432"`로 바꾸고 `application-local.yml` URL도 5433으로 |
 | `./gradlew: Permission denied` (맥) | `chmod +x gradlew` |
+| `Validate failed: Migrations have failed validation` | 머지된 마이그레이션 파일을 고쳤음 → 되돌리고 V2 로 추가. 로컬만 꼬였으면 `docker compose down -v` |
+| `Schema-validation: missing table/column` | 엔티티에 맞는 마이그레이션(V2…)을 안 만들었음 (`ddl-auto: validate`) |
 | VS Code에서 import 빨간 줄 | 명령 팔레트(Ctrl+Shift+P) → `Java: Clean Java Language Server Workspace` |
 | 포트 8080 사용 중 | 이전에 띄운 서버가 살아 있음 → 그 터미널에서 Ctrl+C |
 | 프론트에서 POST가 `403` | CSRF 토큰 누락 → `fetch` 대신 `static/js/api.js`의 `api.post()` 사용 |
+
+## 개발 규칙 요약
+
+### 백엔드
+| 하고 싶은 것 | 방법 |
+|---|---|
+| 오류 응답 보내기 | `throw new ApiException(ErrorCode.LIMIT, "오늘은 더 제보할 수 없어요 (하루 10건)")` → `{code, message, fields}` 자동 변환 (`common/error/`) |
+| 입력 검증 | DTO 에 `@NotBlank`·`@Size` + 컨트롤러 `@Valid` → 실패 시 `VALIDATION` + 칸별 메시지 자동 |
+| 정책값 쓰기 (20m, λ, 한도…) | 하드코딩 ❌ → `AnsimheungProperties` 주입 (`application.yml` 의 `ansimheung.*`, 노션 "상수(C)·검증(V)" 표와 같음) |
+| 시범 지역 검사 | `pilotArea.requireInside(lat, lng)` → 밖이면 `OUT_OF_AREA` |
+| enum | `common/type/` 의 `HazardType`·`TimeSlot`·`HazardStatus`·`MarkerLevel`·`RouteMode`·`Role` 만 사용 |
+| DB 테이블 추가·변경 | `src/main/resources/db/migration/V2__설명.sql` 새 파일 추가 (이미 머지된 V1 수정 ❌). 그림은 [docs/erd.md](docs/erd.md) |
+
+### 프론트
+| 하고 싶은 것 | 방법 |
+|---|---|
+| API 호출 | `fetch` 대신 `api.get()` / `api.post()` (`static/js/api.js`) — CSRF·오류 처리 자동 |
+| 오류 표시 | `catch (e) { alert(e.message) }` — `e.code`, `e.fields` 도 있음 |
+| 백엔드 없이 화면 작업 | 주소 끝에 **`?mock`** → <http://localhost:8080/?mock> . `static/mock/*.json` 가짜 응답 사용 |
+| 학교 좌표·반경 | 하드코딩 ❌ → `api.get('/api/config')` |
 
 협업 규칙은 [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -1,0 +1,12 @@
+{
+  "unreadCount": 1,
+  "items": [
+    {
+      "id": 3,
+      "hazardId": 7,
+      "message": "제보하신 지점이 '확인중'으로 바뀌었어요",
+      "read": false,
+      "createdAt": "2026-11-03T10:00:00+09:00"
+    }
+  ]
+}

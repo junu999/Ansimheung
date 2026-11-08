@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.7'
+    id 'org.springframework.boot' version '3.5.16'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -29,6 +29,9 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     runtimeOnly 'org.postgresql:postgresql'
+    implementation 'org.flywaydb:flyway-core'                  // DB 스키마 버전 관리 (src/main/resources/db/migration)
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'  // application.yml 자동완성
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -37,4 +40,10 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // 실패한 테스트의 원인(기대값 vs 실제값)을 콘솔·CI 로그에 바로 보여줌
+    testLogging {
+        events 'failed'
+        exceptionFormat 'full'
+        showStandardStreams = false
+    }
 }

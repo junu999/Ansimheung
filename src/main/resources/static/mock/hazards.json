@@ -1,0 +1,105 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7436,
+          37.3413
+        ]
+      },
+      "properties": {
+        "id": 12,
+        "type": "ILLEGAL_PARKING",
+        "timeSlot": "MORNING",
+        "status": "RECEIVED",
+        "score": 6.0,
+        "level": "HIGH",
+        "empathyCount": 3,
+        "reportCount": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7418,
+          37.3421
+        ]
+      },
+      "properties": {
+        "id": 7,
+        "type": "SIDEWALK_GAP",
+        "timeSlot": "ALWAYS",
+        "status": "CHECKING",
+        "score": 3.6,
+        "level": "HIGH",
+        "empathyCount": 5,
+        "reportCount": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7451,
+          37.3398
+        ]
+      },
+      "properties": {
+        "id": 15,
+        "type": "SPEEDING",
+        "timeSlot": "AFTERNOON",
+        "status": "RECEIVED",
+        "score": 2.4,
+        "level": "MEDIUM",
+        "empathyCount": 1,
+        "reportCount": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7409,
+          37.3394
+        ]
+      },
+      "properties": {
+        "id": 21,
+        "type": "POOR_LIGHTING",
+        "timeSlot": "NIGHT",
+        "status": "RECEIVED",
+        "score": 1.4,
+        "level": "MEDIUM",
+        "empathyCount": 0,
+        "reportCount": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7442,
+          37.3426
+        ]
+      },
+      "properties": {
+        "id": 9,
+        "type": "CONSTRUCTION",
+        "timeSlot": "ALWAYS",
+        "status": "RESOLVED",
+        "score": 0.5,
+        "level": "RESOLVED",
+        "empathyCount": 2,
+        "reportCount": 1
+      }
+    }
+  ]
+}

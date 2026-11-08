@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.slink.ansimheung.common.error.SecurityErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,7 +28,7 @@ import java.io.IOException;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityErrorHandler errorHandler) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         // TODO 로그인 구현 시: /api/admin/** → hasRole("ADMIN"), 제보·공감 → authenticated()
@@ -39,6 +40,11 @@ public class SecurityConfig {
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 // Spring Security 6 은 토큰을 "쓸 때" 만들어서, 그냥 두면 XSRF-TOKEN 쿠키가 안 내려감 → 매 요청마다 강제로 생성
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
+                // 401·403·CSRF 오류도 공통 오류 응답 {code, message, fields} 로
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(errorHandler)
+                        .accessDeniedHandler(errorHandler))
+                // 로그인은 JSON(POST /api/auth/login) 컨트롤러에서 처리 — 기본 폼 로그인 안 씀
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable());
         return http.build();
