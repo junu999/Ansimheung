@@ -1,0 +1,2 @@
+### 서버 · DB · PostGIS 연결 확인 (VS Code REST Client 확장으로 "Send Request" 클릭)
+GET http://localhost:8080/api/health

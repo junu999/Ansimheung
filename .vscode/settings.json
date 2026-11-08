@@ -1,0 +1,14 @@
+{
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic",
+  "editor.formatOnSave": false,
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "[java]": {
+    "editor.tabSize": 4
+  },
+  "[html][javascript][css][json][yaml]": {
+    "editor.tabSize": 2
+  }
+}

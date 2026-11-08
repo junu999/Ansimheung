@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: ansimheung
+  profiles:
+    default: local          # 아무 설정 없이 실행하면 local 프로필
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
+
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+# 서비스 정책값은 코드에 하드코딩하지 않고 여기에 추가합니다 (기획서 8장)
+ansimheung: {}

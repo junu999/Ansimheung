@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "안심흥 서버 실행 (local)",
+      "request": "launch",
+      "mainClass": "com.slink.ansimheung.AnsimheungApplication",
+      "projectName": "ansimheung",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "local"
+      }
+    }
+  ]
+}

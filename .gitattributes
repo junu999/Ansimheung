@@ -1,0 +1,7 @@
+# 윈도우 · 맥 섞여 써도 줄바꿈이 꼬이지 않게
+* text=auto eol=lf
+*.bat text eol=crlf
+gradlew text eol=lf
+*.jar binary
+*.png binary
+*.jpg binary

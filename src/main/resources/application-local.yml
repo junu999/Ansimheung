@@ -1,0 +1,15 @@
+# 로컬 개발용 설정. docker-compose.yml 의 DB 와 값이 같아서 그대로 실행됩니다.
+# (로컬 Docker 전용 비밀번호라 커밋해도 괜찮습니다. 실제 서버 설정은 application-prod.yml 로 따로, 커밋 금지)
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ansimheung
+    username: ansimheung
+    password: ansimheung
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+logging:
+  level:
+    com.slink.ansimheung: debug
