@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,10 +27,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * 오류가 어디서 나든 {code, message, fields} 모양으로 나오는지 확인.
- * 아래 TestController 는 테스트 클래스패스에만 있어서 실제 서버에는 등록되지 않음 (테스트 실행 시 컴포넌트 스캔으로 등록)
+ * 아래 TestController 는 이 테스트에서만 @Import 로 등록 (실제 서버에는 없음)
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(GlobalExceptionHandlerTest.TestController.class)
 class GlobalExceptionHandlerTest {
 
     @Autowired
