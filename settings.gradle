@@ -1,1 +1,6 @@
+plugins {
+    // PC에 Java 21이 없으면 Gradle이 자동으로 내려받아 컴파일에 사용 (팀원마다 Java 버전이 달라도 동작)
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'ansimheung'

@@ -20,7 +20,7 @@
 | 프로그램 | 확인 명령 | 비고 |
 |---|---|---|
 | Git | `git --version` | |
-| JDK 21 | `java -version` → 21 | [Temurin 21](https://adoptium.net) 권장 |
+| JDK 17 이상 | `java -version` | 21·25 등 아무 버전이나 OK. 컴파일용 Java 21은 Gradle이 자동으로 받아요 |
 | Docker Desktop | `docker --version` | 설치 후 **실행해 둔 상태**여야 함 |
 | VS Code | | 폴더를 열면 추천 확장 설치 안내가 뜸 → **모두 설치** |
 
@@ -58,7 +58,7 @@ docker compose up -d
 
 ### ✅ 세팅 완료 체크리스트
 
-- [ ] `java -version` 이 21
+- [ ] `java -version` 이 17 이상
 - [ ] `docker compose ps` 에서 `ansimheung-db` 가 `healthy`
 - [ ] <http://localhost:8080> 에 지도 + ✅ 문구
 - [ ] `./gradlew test` 성공
