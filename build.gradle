@@ -40,4 +40,10 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // 실패한 테스트의 원인(기대값 vs 실제값)을 콘솔·CI 로그에 바로 보여줌
+    testLogging {
+        events 'failed'
+        exceptionFormat 'full'
+        showStandardStreams = false
+    }
 }
