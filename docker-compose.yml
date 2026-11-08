@@ -3,6 +3,9 @@
 services:
   db:
     image: postgis/postgis:16-3.4
+    # 공식 PostGIS 이미지는 Intel(amd64)용만 있어서 M칩 맥에서는 Docker가 변환(Rosetta)해서 실행해요.
+    # CI와 똑같은 이미지를 쓰려고 명시해 둔 것이라, 동작에는 문제없고 조금 느릴 뿐이에요.
+    platform: linux/amd64
     container_name: ansimheung-db
     environment:
       POSTGRES_DB: ansimheung
