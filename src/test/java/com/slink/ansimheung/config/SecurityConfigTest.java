@@ -34,11 +34,8 @@ class SecurityConfigTest {
 
     @Test
     void GET_요청에_XSRF_TOKEN_쿠키가_내려간다() throws Exception {
-        var response = mockMvc.perform(get("/api/health")).andReturn().getResponse();
-        StringBuilder dump = new StringBuilder();
-        response.getHeaderNames().forEach(n -> dump.append(n).append('=').append(response.getHeaders(n)).append("; "));
-        for (var c : response.getCookies()) dump.append("cookie:").append(c.getName()).append("; ");
-        org.assertj.core.api.Assertions.assertThat(response.getCookie("XSRF-TOKEN")).as("DEBUG " + dump).isNotNull();
+        mockMvc.perform(get("/api/health"))
+                .andExpect(cookie().exists("XSRF-TOKEN"));
     }
 
     @Test
