@@ -95,6 +95,7 @@ class EntityMappingTest {
         assertThat(loaded.getFromNodeId()).isEqualTo(a.getId());
         assertThat(loaded.getGeom().getNumPoints()).isEqualTo(2);
         assertThat(nodes.findById(b.getId()).orElseThrow().getLat()).isEqualTo(37.3421);
-        assertThat(publicLayers.findByKind(PublicLayerKind.CCTV)).hasSize(1);
+        // V2 공공데이터(#34)가 이미 들어 있을 수 있으므로 개수 대신 방금 저장한 행이 있는지만 본다
+        assertThat(publicLayers.findByKind(PublicLayerKind.CCTV)).extracting(PublicLayer::getName).contains("정왕동 CCTV");
     }
 }
