@@ -157,4 +157,13 @@ ES 모듈 + Leaflet(`static/vendor/leaflet`, 설치·CDN 불필요). Spring이 `
 | 위험점수 표시 | 서버 점수(최대 9.0)를 100점 만점으로 환산해 표시, 마커 색은 서버 `level` 그대로 (`mappers.js` `toDisplayScore`) |
 | 제보 제목 | 서버에는 제목 칸이 없어 `"제목\n설명"` 으로 합쳐 `description`(200자)에 저장, 상세에서 다시 나눔 |
 
-협업 규칙은 [CONTRIBUTING.md](CONTRIBUTING.md).
+## 문서
+
+| 문서 | 내용 |
+|---|---|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 브랜치·커밋·PR·Flyway 규칙 |
+| [AGENTS.md](AGENTS.md) | AI 코딩 도구용 규칙 (Claude Code는 [CLAUDE.md](CLAUDE.md), Copilot은 `.github/copilot-instructions.md`가 이것을 가리킴) |
+| [docs/ai-workflow.md](docs/ai-workflow.md) | 팀의 AI 사용법 · 프롬프트 템플릿 · 리뷰 체크리스트 |
+| [docs/domain.md](docs/domain.md) | 정책(P)·상수(C)·검증(V)·상태 전이·위험도 산정식·경로 알고리즘 + 테스트 기대값 |
+| [docs/api.md](docs/api.md) | API 계약 (공통 규칙·오류 코드·enum·엔드포인트) |
+| [docs/erd.md](docs/erd.md) | DB 구조 |

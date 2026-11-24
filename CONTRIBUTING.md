@@ -1,5 +1,8 @@
 # 협업 규칙
 
+> AI 도구로 코드를 쓸 때는 [AGENTS.md](AGENTS.md)(AI용 규칙)와 [docs/ai-workflow.md](docs/ai-workflow.md)(팀 사용법·프롬프트·리뷰 체크리스트)를 함께 봅니다.
+> 정책·알고리즘은 [docs/domain.md](docs/domain.md), API 계약은 [docs/api.md](docs/api.md).
+
 ## 브랜치
 
 | 브랜치 | 용도 | 규칙 |
@@ -51,7 +54,7 @@ git push -u origin feature/F-ROUTE-01-dijkstra
 ## PR
 
 - PR 하나 = 기능 하나. 300줄 넘으면 쪼개기
-- 노션 태스크의 "PR 링크" 칸에 PR 주소 붙이기
+- PR 설명에 `Closes #이슈번호` (작업 관리는 GitHub 이슈 기준, 11/24~)
 - 리뷰어: 백엔드 PR은 선준우·정지훈 서로, 프론트 PR은 정지훈
 - 머지 조건(저장소 규칙으로 강제): PR + 승인 1명 + CI `build` 통과. 본인 PR은 본인이 승인할 수 없음
 - 올리기 전에 로컬에서 `./gradlew test` 한 번 돌려보기
@@ -66,7 +69,7 @@ git push -u origin feature/F-ROUTE-01-dijkstra
 ## 오류·정책값
 
 - 오류는 `throw new ApiException(ErrorCode.XXX)` — 직접 `ResponseEntity.status(...)` 로 오류 본문 만들지 않기
-- 새 오류 코드가 필요하면 `ErrorCode` 에 추가하고 노션 "API 공통 규약" 3장 표도 같이 수정
+- 새 오류 코드가 필요하면 `ErrorCode` 에 추가하고 `docs/api.md` 오류 표(와 노션 "API 공통 규약")도 같이 수정
 - 20m·500m·λ·하루 한도 같은 숫자는 `AnsimheungProperties` 로만 읽기
 
 ## 코드 이름
@@ -75,5 +78,5 @@ git push -u origin feature/F-ROUTE-01-dijkstra
 
 ## 절대 커밋하지 않는 것
 
-- `application-local.yml` (DB 비밀번호)
+- `application-prod.yml`, `.env` (실제 서버 비밀값) — `application-local.yml`은 로컬 Docker 전용 값이라 커밋되어 있음
 - 업로드 사진 (`uploads/`)
