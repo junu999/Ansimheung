@@ -141,4 +141,13 @@ docker compose up -d
 | 백엔드 없이 화면 작업 | 주소 끝에 **`?mock`** → <http://localhost:8080/?mock> . `static/mock/*.json` 가짜 응답 사용 |
 | 학교 좌표·반경 | 하드코딩 ❌ → `api.get('/api/config')` |
 
-협업 규칙은 [CONTRIBUTING.md](CONTRIBUTING.md).
+## 문서
+
+| 문서 | 내용 |
+|---|---|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 브랜치·커밋·PR·Flyway 규칙 |
+| [AGENTS.md](AGENTS.md) | AI 코딩 도구용 규칙 (Claude Code는 [CLAUDE.md](CLAUDE.md), Copilot은 `.github/copilot-instructions.md`가 이것을 가리킴) |
+| [docs/ai-workflow.md](docs/ai-workflow.md) | 팀의 AI 사용법 · 프롬프트 템플릿 · 리뷰 체크리스트 |
+| [docs/domain.md](docs/domain.md) | 정책(P)·상수(C)·검증(V)·상태 전이·위험도 산정식·경로 알고리즘 + 테스트 기대값 |
+| [docs/api.md](docs/api.md) | API 계약 (공통 규칙·오류 코드·enum·엔드포인트) |
+| [docs/erd.md](docs/erd.md) | DB 구조 |
