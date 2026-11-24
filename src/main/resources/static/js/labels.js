@@ -14,6 +14,6 @@ export const riskNames = { high:'위험 높음', medium:'위험 보통', resolve
 // 경로 화면의 예시 출발지 (정왕초 기준 300~400m). 시연 출발지는 #15(시드 데이터)에서 확정 후 교체.
 export const starts = [
   { id:'west', name:'서쪽 주거지 입구', caption:'학교까지 약 350m · 예시 위치', lat:37.3412, lng:126.7391 },
-  { id:'north', name:'북쪽 골목 입구', caption:'학교까지 약 350m · 예시 위치', lat:37.3440, lng:126.7433 },
+  { id:'north', name:'북쪽 골목 입구', caption:'정문까지 최단 약 620m · 시연 출발지', lat:37.344404, lng:126.743579 },
   { id:'south', name:'남쪽 큰길 입구', caption:'학교까지 약 350m · 예시 위치', lat:37.3377, lng:126.7419 },
 ];

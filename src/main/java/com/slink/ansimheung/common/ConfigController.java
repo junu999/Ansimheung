@@ -34,12 +34,14 @@ public class ConfigController {
                 props.marker().highThreshold(),
                 modes,
                 props.route().walkMPerMin(),
-                new Limits(props.limits().reportsPerDay(), props.limits().empathiesPerDay())
+                new Limits(props.limits().reportsPerDay(), props.limits().empathiesPerDay()),
+                props.seed().enabled()
         );
     }
 
+    /** @param demoData 시연용 시드가 켜져 있으면 true → 화면에 "시연용 예시 데이터"(DEMO) 표시 (docs/domain.md 8장, #16) */
     public record PublicConfig(School school, double radiusM, double mergeRadiusM, double markerHighThreshold,
-                               List<RouteModeConfig> routeModes, double walkMPerMin, Limits limits) {
+                               List<RouteModeConfig> routeModes, double walkMPerMin, Limits limits, boolean demoData) {
     }
 
     public record School(String name, String address, double lat, double lng) {

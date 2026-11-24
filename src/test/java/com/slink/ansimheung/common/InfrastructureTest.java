@@ -36,7 +36,7 @@ class InfrastructureTest {
         assertThat(props.merge().radiusM()).isEqualTo(20);
         assertThat(props.limits().reportsPerDay()).isEqualTo(10);
         assertThat(props.route().lambdaSafest()).isEqualTo(60);
-        assertThat(props.marker().highThreshold()).isEqualTo(3.0);
+        assertThat(props.marker().highThreshold()).isEqualTo(3.5);
     }
 
     @Test
@@ -48,7 +48,8 @@ class InfrastructureTest {
                 .andExpect(jsonPath("$.school.lng").value(126.7430))
                 .andExpect(jsonPath("$.radiusM").value(500.0))
                 .andExpect(jsonPath("$.routeModes[2].mode").value("SAFEST"))
-                .andExpect(jsonPath("$.routeModes[2].lambda").value(60.0));
+                .andExpect(jsonPath("$.routeModes[2].lambda").value(60.0))
+                .andExpect(jsonPath("$.demoData").value(false));   // 테스트는 시드를 끄고 돈다 (test config/application-local.yml)
     }
 
     @Test
