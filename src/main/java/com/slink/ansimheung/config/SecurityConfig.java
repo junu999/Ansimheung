@@ -5,8 +5,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.slink.ansimheung.common.error.SecurityErrorHandler;
+import com.slink.ansimheung.common.type.Role;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,9 +24,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * 초기 세팅용 보안 설정.
- * 지금은 모든 요청을 허용해서 개발을 막지 않게 해두었습니다.
- * 로그인 기능을 만들 때 상세 기획서 4장 권한 매트릭스대로 authorizeHttpRequests 를 채웁니다.
+ * 보안 설정 — 세션 로그인 + CSRF 쿠키 + 권한 규칙 (docs/api.md "권한" 열과 같음).
+ * - /api/admin/** → ADMIN
+ * - 제보 등록·수정·삭제, 공감, 묶기 후보, 내 정보(/api/me/**) → 회원
+ * - 나머지(지도·상세·경로·설정·화면 파일) → 누구나
+ * 새 회원 전용 API 를 만들면 아래 MEMBER 규칙에 한 줄 추가하고 SecurityConfigTest 에도 한 줄 추가할 것.
  */
 @Configuration
 public class SecurityConfig {
@@ -31,10 +37,18 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityErrorHandler errorHandler) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // TODO 로그인 구현 시: /api/admin/** → hasRole("ADMIN"), 제보·공감 → authenticated()
+                        .requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name())
+                        // MEMBER — 로그인 필요
+                        .requestMatchers("/api/me", "/api/me/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/reports").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/reports/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reports/**").authenticated()
+                        .requestMatchers("/api/hazards/*/empathy").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/hazards/nearby").authenticated()
+                        // 그 외 공개 (GET /api/hazards, /api/hazards/{id}, POST /api/routes, /api/auth/**, 정적 파일)
                         .anyRequest().permitAll())
                 // 세션 로그인 + 같은 도메인 프론트 → CSRF 토큰을 XSRF-TOKEN 쿠키로 내려주고
-                // 프론트는 POST/PATCH/DELETE 때 X-XSRF-TOKEN 헤더로 돌려보냄 (static/js/api.js 가 자동 처리)
+                // 프론트는 POST/PATCH/DELETE 때 X-XSRF-TOKEN 헤더로 돌려보냄 (static/js/http.js 가 자동 처리)
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
@@ -53,6 +67,15 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * 로그인 API(#9)용. UserDetailsService(LoginUserDetailsService) + PasswordEncoder 로 자동 구성된 것을 꺼내 쓴다.
+     * 인증 성공 후 세션 저장은 컨트롤러에서 SecurityContextRepository(HttpSessionSecurityContextRepository)로 한다.
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 
     /** CSRF 토큰을 읽어서 XSRF-TOKEN 쿠키가 응답에 실리게 하는 필터 */
