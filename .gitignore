@@ -27,3 +27,6 @@ uploads/
 
 # Logs
 *.log
+
+# 공공데이터 원본 CSV (scripts/build_public_layers.py 입력) — 결과 SQL만 커밋
+scripts/*.csv

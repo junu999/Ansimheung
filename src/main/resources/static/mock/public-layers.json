@@ -6,12 +6,15 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          126.7436,
-          37.3412
+          126.7482723,
+          37.3392692
         ]
       },
       "properties": {
-        "kind": "CCTV"
+        "id": 1,
+        "kind": "CCTV",
+        "name": "정왕1교 식자재마트 앞 (2021.05 변경)",
+        "source": "공공데이터포털 경기도_시흥시_불법주정차단속CCTV현황 (2026-09-28)"
       }
     },
     {
@@ -19,12 +22,15 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          126.7424,
-          37.3401
+          126.7432287,
+          37.3409187
         ]
       },
       "properties": {
-        "kind": "CCTV"
+        "id": 16,
+        "kind": "SCHOOL_ZONE",
+        "name": "정왕초등학교",
+        "source": "공공데이터포털 전국어린이보호구역표준데이터 (2026-08-19)"
       }
     }
   ]
