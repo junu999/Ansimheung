@@ -21,8 +21,9 @@ public record AnsimheungProperties(
         Paging paging
 ) {
 
-    /** P-05 시범 지역 */
-    public record Area(String schoolName, String schoolAddress, double centerLat, double centerLng, double radiusM) {
+    /** P-05 시범 지역. gate = 경로 목적지(정문) 좌표 */
+    public record Area(String schoolName, String schoolAddress, double centerLat, double centerLng, double radiusM,
+                       double gateLat, double gateLng) {
     }
 
     /** P-01 중복 묶기 */
