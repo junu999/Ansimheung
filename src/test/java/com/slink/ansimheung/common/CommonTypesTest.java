@@ -64,7 +64,7 @@ class CommonTypesTest {
 
     @Test
     void 시범_지역_500m_P05() {
-        var area = new AnsimheungProperties.Area("정왕초등학교", "경기 시흥시 중심상가로 257", 37.3408, 126.7430, 500);
+        var area = new AnsimheungProperties.Area("정왕초등학교", "경기 시흥시 중심상가로 257", 37.3408, 126.7430, 500, 37.340888, 126.742130);
         var props = new AnsimheungProperties(area, null, null, null, null, null, null, null, null);
         PilotArea pilot = new PilotArea(props);
 

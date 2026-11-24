@@ -2,6 +2,8 @@ package com.slink.ansimheung.route;
 
 import com.slink.ansimheung.common.error.ApiException;
 import com.slink.ansimheung.common.error.ErrorCode;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LineString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -33,7 +35,8 @@ public class GraphLoader {
                         .map(n -> new Graph.Vertex(n.getId(), n.getLat(), n.getLng()))
                         .toList(),
                 edgeRepository.findAll().stream()
-                        .map(e -> new Graph.Segment(e.getId(), e.getFromNodeId(), e.getToNodeId(), e.getLengthM()))
+                        .map(e -> new Graph.Segment(e.getId(), e.getFromNodeId(), e.getToNodeId(), e.getLengthM(),
+                                latLngs(e.getGeom())))
                         .toList());
         graph = loaded;
 
@@ -44,6 +47,16 @@ public class GraphLoader {
         log.info("도보 그래프 적재: 노드 {}개 · 구간 {}개 · 고립 노드 {}개 · 연결 {}",
                 loaded.nodeCount(), loaded.edgeCount(), loaded.isolatedNodeCount(),
                 loaded.isConnected() ? "하나로 연결됨" : "⚠️ 끊긴 덩어리 있음");
+    }
+
+    /** JTS 는 (x=경도, y=위도) → [[lat, lng], ...] */
+    private static double[][] latLngs(LineString line) {
+        Coordinate[] cs = line.getCoordinates();
+        double[][] out = new double[cs.length][];
+        for (int i = 0; i < cs.length; i++) {
+            out[i] = new double[]{cs[i].getY(), cs[i].getX()};
+        }
+        return out;
     }
 
     /** @throws ApiException NO_GRAPH(503) 그래프가 비어 있을 때 */

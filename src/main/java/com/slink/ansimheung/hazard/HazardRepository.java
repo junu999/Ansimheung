@@ -1,6 +1,9 @@
 package com.slink.ansimheung.hazard;
 
+import com.slink.ansimheung.common.type.HazardStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 
 /**
  * 위험 지점 조회. 공간 검색(bbox·반경 20m·가장 가까운 구간)은 각 기능 이슈에서
@@ -12,4 +15,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * ⚠️ ST_MakePoint 는 (경도, 위도) 순서.
  */
 public interface HazardRepository extends JpaRepository<Hazard, Long> {
+
+    /** 경로 비용에 들어가는 지점 (#13): 구간이 배정됐고, 숨김 아니고, 반려 아님. 개선완료 30일 숨김은 호출하는 쪽에서 */
+    List<Hazard> findByEdgeIdIsNotNullAndHiddenFalseAndStatusNot(HazardStatus status);
 }

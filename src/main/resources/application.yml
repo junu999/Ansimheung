@@ -39,6 +39,8 @@ ansimheung:
     center-lat: 37.3408
     center-lng: 126.7430
     radius-m: 500
+    gate-lat: 37.340888          # 경로 목적지 = 정문 (정왕중과 마주 보는 남서쪽 면의 서쪽 끝, 현장 확인 11/24)
+    gate-lng: 126.742130         # → 서버가 가장 가까운 그래프 노드를 목적지로 씀 (#13)
   merge:
     radius-m: 20                 # P-01 중복 묶기 반경
   risk:

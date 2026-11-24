@@ -94,6 +94,10 @@
 |---|---|---|---|---|---|
 | POST | `/api/routes` | 불필요 | `{fromLat, fromLng, timeSlot?}` | `routes.json` `{routes:[{mode, lambda, distanceM, minutes, riskExposure, hazardIds, path(LineString)}] × 3}` | #13 |
 
+- `timeSlot` 생략 시 **요청 시각(Asia/Seoul)의 시간대**로 계산 (09–14시는 시간대 없음 → 상시 제보만 1.2). `ALWAYS`는 `VALIDATION`.
+- 목적지는 정문(`ansimheung.area.gate-lat/lng`)에서 가장 가까운 그래프 노드. `path`는 출발지를 스냅한 노드에서 시작해 정문 노드에서 끝남 (출발지 원래 좌표는 응답·로그에 없음, P-12).
+- `distanceM` 정수 반올림, `minutes` = distanceM ÷ 60 반올림, `riskExposure` = 지나는 구간 edgeRisk 합 (소수 첫째 자리), `hazardIds` = 지나는 순서.
+
 출발지 좌표는 저장·로그 금지 (P-12). `timeSlot`이 없으면 서버 현재 시각 기준 `TimeSlot.of()`.
 
 ### 관리자 (`/api/admin/**` = ADMIN)
