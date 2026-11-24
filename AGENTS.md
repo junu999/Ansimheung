@@ -7,6 +7,8 @@
 
 **안심흥** — 시흥시 **정왕초등학교 반경 500m** 통학로의 위험 제보를 모아 위험점수로 바꾸고, 최단·균형·안전 3가지 도보 경로를 비교해 주는 웹서비스 (웹서비스프로그래밍 8팀 S-Link, **최종 제출 2026-11-29**).
 
+**시연은 로컬에서만 한다** (팀원 노트북 `docker compose` + `bootRun`). 배포·도메인·HTTPS·운영 서버 설정은 만들지 않는다.
+
 흐름: 주민 제보 → 위험점수 계산 → 경로 추천에 반영 → 관리자 처리(개선완료) → 점수·경로 재반영.
 
 ## 2. 무엇이 정답인가 (충돌 시 위가 이김)
@@ -36,12 +38,13 @@ PR 올리기 전 `./gradlew test`가 통과해야 한다. 통과를 확인하지
 src/main/java/com/slink/ansimheung/
 ├── common/            이미 있음 — error/(ErrorCode·ApiException), type/(enum), geo/(PilotArea·GeoUtils), ConfigController
 ├── config/            이미 있음 — AnsimheungProperties(ansimheung.*), SecurityConfig(세션+CSRF 쿠키)
-├── auth/              회원가입·로그인·내 정보 (#9)
-├── hazard/            Hazard·Report·Photo·Empathy·StatusHistory 엔티티, 제보·조회·공감 API (#11 #12 #24~#26)
-├── risk/              RiskCalculator, 구간 배정 (#10)
-├── route/             Graph·Dijkstra·RouteService·POST /api/routes (#8 #13)
+├── auth/              User · LoginUser · LoginUserDetailsService (#31) + 회원가입·로그인 API (#9)
+├── hazard/            Hazard·Report·Photo·Empathy·StatusHistory 엔티티·리포지토리 (#31) + 제보·조회·공감 API (#11 #12 #24~#26)
+├── risk/              RiskService 계약 (#31) → 실제 구현 RiskCalculator·구간 배정 (#10)
+├── route/             Node·Edge 엔티티 (#31) + Graph·Dijkstra·RouteService·POST /api/routes (#8 #13)
 ├── admin/             /api/admin/** (#14)
-└── seed/              시연용 시드 (local/dev 프로필만, #15)
+├── notification/ · publiclayer/   엔티티만 (기능은 범위 제외 #28)
+└── seed/              시연 계정(관리자·주민) + 시드 30건 — 오직 여기서만 (#15)
 src/main/resources/
 ├── application.yml    정책값 ansimheung.* (하드코딩 금지 — AnsimheungProperties로 읽기)
 ├── db/migration/      Flyway. V1 = 10개 테이블. 변경은 V2__설명.sql 새 파일
@@ -54,6 +57,16 @@ src/main/resources/
 ```
 
 기능 패키지 안은 `XxxController` · `XxxService` · `XxxRepository` · `dto/`(Java `record`) · 엔티티. 패키지를 새로 만들기 전에 위 목록에 맞는지 본다.
+
+### 이미 정해진 모듈 계약 (#31) — 새로 만들지 말고 이것을 쓴다
+| 필요한 것 | 쓰는 것 |
+|---|---|
+| 엔티티 | 위 엔티티 그대로. **연관관계(`@ManyToOne`) 없이 외래키 id 필드**(`report.getHazardId()`). 새 엔티티·필드가 필요하면 V2 마이그레이션과 함께 |
+| 엔티티 만들기·바꾸기 | 정적 생성 메서드(`Hazard.create(...)`, `Report.create(...)`)와 도메인 메서드(`hazard.changeStatus()`, `addReport()`, `addEmpathy()`, `hide()`). setter 추가 금지 |
+| 좌표 | `Geometries.point(lat, lng)` · `hazard.getLat()/getLng()` (JTS 내부는 x=경도) |
+| 로그인 사용자 | 컨트롤러 파라미터 `@AuthenticationPrincipal LoginUser user` → `user.id()`, `user.isAdmin()` |
+| 위험점수 | `RiskService.refresh(hazard)` (제보·공감·상태 변경 직후 같은 트랜잭션), `scoreAt(hazard, slot)`, `levelOf(hazard, score)` |
+| 권한 | `SecurityConfig`의 규칙. 새 회원 전용 API는 거기 한 줄 + `SecurityConfigTest` 한 줄 |
 
 ## 5. 반드시 지킬 것 (MUST)
 
@@ -75,6 +88,15 @@ src/main/resources/
 - 위험점수: DB `hazards.base_score = W×R×E×S`, 시간대 T는 조회할 때 곱한다. 제보·공감·상태 변경 직후 `RiskCalculator`로 재계산.
 - 서비스 로직에는 테스트를 붙인다. docs/domain.md의 계산 예시(4.0 / 6.0 / 1.8)와 A/B 경로 예시가 그대로 테스트 기대값이다.
 
+### 테스트 방식 (팀 합의 11/24)
+| 대상 | 방식 | 예 |
+|---|---|---|
+| 위험점수 계산(`RiskCalculator`), Dijkstra·`Graph`, 엔티티 도메인 메서드, 순수 변환 | **순수 단위 테스트** — `@SpringBootTest` 없이 `new`로 만들어 JUnit만. DB·Spring 컨텍스트 ❌ | `HazardTest`, `RiskCalculatorTest`, `DijkstraTest` |
+| API(컨트롤러~DB), 리포지토리 쿼리, 권한 | **`@SpringBootTest` + `@Transactional`** (+ `@AutoConfigureMockMvc`) — 테스트 끝나면 롤백. DB 필요 | `EntityMappingTest`, `SecurityConfigTest` |
+- 순수 단위 테스트에 필요한 정책값은 `new AnsimheungProperties(...)` 대신 테스트 안에서 값을 직접 넘길 수 있게 계산 클래스를 설계한다 (생성자에 숫자·record 주입).
+- 테스트 데이터는 각 테스트가 직접 만든다. 시드 데이터(#15)에 기대지 않는다.
+- 로그인 사용자가 필요한 API 테스트는 `SecurityMockMvcRequestPostProcessors.user(...)` 또는 테스트 안에서 `User` 저장 후 로그인.
+
 ### 프론트
 - 서버 호출은 `js/api.js`의 메서드로만. 새 API는 `api.js` 메서드 → `mappers.js` 변환 → `mock/`에 JSON → `http.js` `MOCK_ROUTES` 한 줄, 그리고 `src/test/js/mappers.test.mjs`에 테스트.
 - `fetch` 직접 호출 금지 (CSRF 403 남). 학교 좌표·반경 하드코딩 금지 (`config.school`).
@@ -86,6 +108,8 @@ src/main/resources/
 - 이미 머지된 `V1__init_schema.sql` 등 마이그레이션 수정
 - `main`·`develop`에 직접 push, 강제 push, 보호 규칙 우회
 - 비밀값·`.env`·`application-prod.yml`·`uploads/` 커밋. 실제 개인정보(이메일·전화·얼굴 사진)를 테스트 데이터·프롬프트에 넣기
+- **시연 계정(관리자·주민)이나 시드 데이터를 #15(`seed/`) 밖에서 만들기** — 다른 기능 PR에 `CommandLineRunner`·`data.sql`·초기 계정 코드 ❌
+- 배포용 설정(Dockerfile, 운영 프로필, 클라우드 설정) 추가 — 시연은 로컬만
 - **경로 출발지 좌표를 DB·로그에 남기기** (P-12). 사진은 EXIF 제거 전 저장 금지 (P-08). 위험 지점 상세에 작성자 노출 금지(관리자 화면만)
 - 새 라이브러리·프레임워크 추가 (npm, React, Lombok, QueryDSL 등) — 필요하면 PR에서 먼저 제안
 - 테스트를 지우거나 `@Disabled`로 꺼서 통과시키기, 실패를 숨기는 `catch (Exception e) {}`
