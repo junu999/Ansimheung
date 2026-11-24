@@ -7,7 +7,7 @@
   },
   "radiusM": 500,
   "mergeRadiusM": 20,
-  "markerHighThreshold": 3.0,
+  "markerHighThreshold": 3.5,
   "routeModes": [
     {
       "mode": "SHORTEST",
@@ -26,5 +26,6 @@
   "limits": {
     "reportsPerDay": 10,
     "empathiesPerDay": 30
-  }
+  },
+  "demoData": true
 }

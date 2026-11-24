@@ -18,7 +18,8 @@ public record AnsimheungProperties(
         Marker marker,
         Hazard hazard,
         Upload upload,
-        Paging paging
+        Paging paging,
+        Seed seed
 ) {
 
     /** P-05 시범 지역. gate = 경로 목적지(정문) 좌표 */
@@ -66,5 +67,9 @@ public record AnsimheungProperties(
 
     /** C-14 */
     public record Paging(int defaultSize, int maxSize) {
+    }
+
+    /** 시연용 시드 (#15). enabled 는 application-local.yml 에서만 켠다. 비밀번호도 local 에만 둠 */
+    public record Seed(boolean enabled, String adminPassword, String parentPassword) {
     }
 }

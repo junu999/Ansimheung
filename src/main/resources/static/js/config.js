@@ -4,7 +4,7 @@ import { http } from './http.js';
 
 const fallback = {
   school: { name: '정왕초등학교', address: '경기 시흥시 중심상가로 257', lat: 37.3408, lng: 126.7430 },
-  radiusM: 500, mergeRadiusM: 20, markerHighThreshold: 3.0, walkMPerMin: 60,
+  radiusM: 500, mergeRadiusM: 20, markerHighThreshold: 3.5, walkMPerMin: 60, demoData: false,
 };
 
 let server = fallback, serverReachable = true;
@@ -17,6 +17,7 @@ export const config = Object.freeze({
   mergeRadiusM: server.mergeRadiusM,
   markerHighThreshold: server.markerHighThreshold,
   walkMPerMin: server.walkMPerMin,
+  demoData: Boolean(server.demoData), // 시연용 시드가 들어간 서버면 true → 'DEMO' 표시 (#16)
   basemap: { mode: 'tiles', tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' },
   maxPhotoBytes: 5 * 1024 * 1024, // P-04
 });

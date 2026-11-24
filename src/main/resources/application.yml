@@ -62,7 +62,7 @@ ansimheung:
     snap-max-m: 50               # C-10
     walk-m-per-min: 60           # C-11 어린이 보행 속도
   marker:
-    high-threshold: 3.0          # C-08 (시드 30건 후 상위 30% 기준으로 재조정)
+    high-threshold: 3.5          # C-08 시드 30곳 점수 상위 30%(9곳) 경계 — 3.28 < 3.5 ≤ 3.51 (#15에서 재조정)
   hazard:
     resolved-hide-days: 30       # P-11
   upload:
@@ -71,3 +71,5 @@ ansimheung:
   paging:
     default-size: 20             # C-14
     max-size: 100
+  seed:
+    enabled: false               # 시연용 시드(#15). local 프로필에서만 켬 → application-local.yml

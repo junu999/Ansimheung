@@ -130,7 +130,7 @@ class DefaultRiskServiceTest {
         double lunch = riskService.scoreAt(h, Optional.empty());
         assertThat(morning).isCloseTo(2.7 * 1.5, within(0.001));
         assertThat(lunch).isCloseTo(2.7, within(0.001));
-        assertThat(riskService.levelOf(h, morning)).isEqualTo(MarkerLevel.HIGH);    // 4.05 ≥ 3.0
+        assertThat(riskService.levelOf(h, morning)).isEqualTo(MarkerLevel.HIGH);    // 4.05 ≥ 3.5
         assertThat(riskService.levelOf(h, lunch)).isEqualTo(MarkerLevel.MEDIUM);
     }
 }

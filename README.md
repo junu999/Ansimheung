@@ -72,6 +72,20 @@ docker compose up -d
 - [ ] `./gradlew test` 성공
 - [ ] `git switch develop` 후 `feature/test-본인이름` 브랜치로 PR 한 번 올려보기 → CI 초록불
 
+### 시연 계정 · 시연용 데이터
+
+`./gradlew bootRun`(local 프로필)으로 처음 켜면 시연용 데이터가 자동으로 들어갑니다. 이미 있으면 건너뜁니다.
+
+| 계정 | 이메일 | 비밀번호 |
+|---|---|---|
+| 관리자 | `admin@ansimheung.local` | `ansim1234` |
+| 주민(학부모) | `parent@ansimheung.local` | `ansim1234` |
+
+- **팀 전체가 이 두 계정만 씁니다** (11/24 합의). 다른 PR에서 계정을 따로 만들지 않아요. 비밀번호는 `application-local.yml`의 `ansimheung.seed.*`.
+- 위험 지점 30곳 = 시연용 예시 데이터 (실제 제보 아님). 화면에는 `GET /api/config`의 `demoData: true`로 DEMO 표시.
+- 시연 출발지 "북쪽 골목 입구"(37.344404, 126.743579) → 최단 619m·10분 / 균형 813m·14분 / 안전 915m·15분.
+- 처음 상태로 되돌리기: `docker compose down -v` → `docker compose up -d` → `./gradlew bootRun`.
+
 ---
 
 ## 매일 쓰는 명령

@@ -11,3 +11,10 @@ spring:
 logging:
   level:
     com.slink.ansimheung: debug
+
+# 시연용 시드 (#15) — 서버 시작 시 시연 계정 2개 + 위험 지점 30곳을 넣음 (이미 있으면 건너뜀). 계정은 README 참고
+ansimheung:
+  seed:
+    enabled: true
+    admin-password: ansim1234
+    parent-password: ansim1234

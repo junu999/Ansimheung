@@ -46,7 +46,7 @@
 | C-05 | 일일 제보 한도 | 10건 (00시 기준) | `ansimheung.limits.reports-per-day` |
 | C-06 | 일일 공감 한도 | 30회 | `ansimheung.limits.empathies-per-day` |
 | C-07 | λ | 최단 0 · 균형 20 · 안전 60 | `ansimheung.route.lambda-*` |
-| C-08 | 마커 빨강 기준 | 점수 ≥ 3.0 → `HIGH` (시드 30건 후 상위 30%로 재조정) | `ansimheung.marker.high-threshold` |
+| C-08 | 마커 빨강 기준 | 점수 ≥ 3.5 → `HIGH` (시드 30곳 점수 상위 30% 경계, #15에서 3.0 → 3.5) | `ansimheung.marker.high-threshold` |
 | C-09 | 구간 배정 최대 거리 | 25m | `ansimheung.route.edge-assign-max-m` |
 | C-10 | 출발지 스냅 최대 거리 | 50m (넘으면 `FAR_FROM_ROAD`) | `ansimheung.route.snap-max-m` |
 | C-11 | 어린이 보행 속도 | 분속 60m (예상 시간 = 거리 ÷ 60, 반올림) | `ansimheung.route.walk-m-per-min` |

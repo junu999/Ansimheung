@@ -1,0 +1,5 @@
+# 테스트 전용 덮어쓰기. 테스트도 local 프로필(같은 Docker DB)로 돌기 때문에
+# 시연용 시드가 테스트 중에 자동으로 들어가지 않게 끈다. (DemoSeederTest 는 시더를 직접 호출해서 확인)
+ansimheung:
+  seed:
+    enabled: false

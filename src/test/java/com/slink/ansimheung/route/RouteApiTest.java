@@ -9,6 +9,7 @@ import com.slink.ansimheung.hazard.Hazard;
 import com.slink.ansimheung.hazard.HazardRepository;
 import com.slink.ansimheung.risk.RiskService;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** POST /api/routes (DB 필요). 그래프는 Flyway V3 실제 데이터, 위험 지점은 테스트마다 넣고 롤백 */
+/** POST /api/routes (DB 필요). 그래프는 Flyway V3 실제 데이터, 위험 지점은 테스트마다 비우고 넣은 뒤 롤백 */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -47,6 +49,13 @@ class RouteApiTest {
     @Autowired GraphLoader graphLoader;
     @Autowired AnsimheungProperties props;
     @Autowired EntityManager em;
+    @Autowired JdbcTemplate jdbc;
+
+    /** bootRun 으로 들어간 시연용 시드(#15) 등 DB 에 남아 있는 지점을 비운다. 테스트 트랜잭션 안이라 끝나면 롤백 → 시드는 그대로 */
+    @BeforeEach
+    void 기존_위험_지점을_비운다() {
+        jdbc.update("DELETE FROM hazards");
+    }
 
     private ResultActions request(String body) throws Exception {
         return mockMvc.perform(post("/api/routes").with(csrf())
