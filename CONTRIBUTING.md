@@ -33,7 +33,9 @@ git add .
 git commit -m "feat(route): Dijkstra 경로 탐색 구현"
 git push -u origin feature/F-ROUTE-01-dijkstra
 # GitHub에서 base: develop 으로 PR 생성 → 팀원 1명 Approve → CI 통과 → Squash and merge
-# 머지되면 원격 브랜치는 자동 삭제 → 로컬 정리: git switch develop && git pull && git fetch --prune
+# 머지되면 원격 브랜치는 자동 삭제 → 로컬 정리:
+git switch develop && git pull && git fetch --prune
+git branch -D feature/F-ROUTE-01-dijkstra   # Squash merge라 -d 는 "머지 안 됨"으로 거부됨 → -D
 ```
 
 ## 커밋 메시지
@@ -54,10 +56,49 @@ git push -u origin feature/F-ROUTE-01-dijkstra
 ## PR
 
 - PR 하나 = 기능 하나. 300줄 넘으면 쪼개기
-- PR 설명에 `Closes #이슈번호` (작업 관리는 GitHub 이슈 기준, 11/24~)
+- **PR 제목도 커밋 메시지 규칙대로** (`feat(route): Dijkstra 경로 탐색 구현`) — Squash merge하면 PR 제목이 develop에 남는 커밋 메시지가 됨
+- PR 설명에 `Closes #이슈번호` (작업 관리는 GitHub 이슈 기준, 11/24~) — 단, 아래 "이슈" 절의 주의 참고
 - 리뷰어: 백엔드 PR은 선준우·정지훈 서로, 프론트 PR은 정지훈
 - 머지 조건(저장소 규칙으로 강제): PR + 승인 1명 + CI `build` 통과. 본인 PR은 본인이 승인할 수 없음
 - 올리기 전에 로컬에서 `./gradlew test` 한 번 돌려보기
+
+## PR 올린 뒤
+
+**리뷰 반영** — 같은 브랜치에 커밋을 더 하고 push하면 PR이 자동으로 갱신됩니다. PR을 새로 만들지 않기.
+
+```bash
+git add . && git commit -m "fix(route): 리뷰 반영 — 음수 가중치 검사"
+git push
+```
+
+**CI가 빨간불(❌)일 때** — PR 아래 Checks의 `build` → **Details** → 빨간 단계의 로그를 펼쳐 첫 번째 오류를 찾습니다. 대부분 테스트 실패라 로컬에서 `./gradlew test`로 재현 → 고쳐서 push하면 CI가 다시 돕니다.
+
+**develop이 앞서가서 충돌(conflict)이 났을 때** — 내 브랜치에 develop을 merge합니다. (rebase + force push는 쓰지 않기)
+
+```bash
+git switch feature/F-ROUTE-01-dijkstra
+git fetch origin
+git merge origin/develop
+# 충돌 파일에서 <<<<<<< ======= >>>>>>> 부분을 직접 고친 뒤
+git add . && git commit        # 기본 메시지 그대로 저장
+git push
+```
+
+충돌 난 곳이 남의 코드라 어떻게 합칠지 모르겠으면 혼자 정하지 말고 그 코드 작성자에게 물어보기.
+
+## 이슈
+
+- 작업 목록은 GitHub 이슈 #8~#28. 시작할 때 이슈 오른쪽 **Assignees**에 본인을 지정해 겹치지 않게 합니다.
+- 새 작업은 **New issue → "작업" 템플릿**, 제목 `[기능ID] 설명`, 라벨을 붙입니다.
+
+| 라벨 | 뜻 |
+|---|---|
+| `P0` / `P1` | 시연 필수(11/27까지) / P0 끝난 뒤 |
+| `BE` / `ALGO` / `FE` | 담당 파트 |
+| `area:*` | 기능 영역 (`area:route`, `area:report` …) |
+| `bug` | 버그 |
+
+- ⚠️ **`Closes #번호`는 `develop` 머지로는 이슈를 닫지 않습니다.** GitHub는 기본 브랜치(`main`)에 머지될 때만 자동으로 닫기 때문입니다. develop에 머지되면 **이슈에 PR 링크를 남기고 직접 Close** 합니다.
 
 ## DB 변경 (Flyway)
 

@@ -161,7 +161,7 @@ ES 모듈 + Leaflet(`static/vendor/leaflet`, 설치·CDN 불필요). Spring이 `
 
 | 문서 | 내용 |
 |---|---|
-| [CONTRIBUTING.md](CONTRIBUTING.md) | 브랜치·커밋·PR·Flyway 규칙 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 브랜치·커밋·PR·이슈·충돌 해결·Flyway 규칙 |
 | [AGENTS.md](AGENTS.md) | AI 코딩 도구용 규칙 (Claude Code는 [CLAUDE.md](CLAUDE.md), Copilot은 `.github/copilot-instructions.md`가 이것을 가리킴) |
 | [docs/ai-workflow.md](docs/ai-workflow.md) | 팀의 AI 사용법 · 프롬프트 템플릿 · 리뷰 체크리스트 |
 | [docs/domain.md](docs/domain.md) | 정책(P)·상수(C)·검증(V)·상태 전이·위험도 산정식·경로 알고리즘 + 테스트 기대값 |
