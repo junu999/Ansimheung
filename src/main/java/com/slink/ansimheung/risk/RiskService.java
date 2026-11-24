@@ -8,7 +8,7 @@ import java.util.Optional;
 
 /**
  * 위험도 모듈의 계약. 다른 모듈(제보 #11, 공감 #26, 관리자 #14, 조회 #12, 경로 #13)은 이 인터페이스만 부른다.
- * 실제 구현은 #10 에서 {@link PendingRiskService} 를 지우고 새 구현으로 바꾼다. 메서드 모양은 바꾸지 말 것.
+ * 구현: {@link DefaultRiskService}. 메서드 모양은 바꾸지 말 것 (다른 모듈이 호출).
  * 공식은 docs/domain.md 6·7장.
  */
 public interface RiskService {
