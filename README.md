@@ -57,7 +57,8 @@ docker compose up -d
 
 ### 5. 확인
 
-브라우저에서 <http://localhost:8080> → 정왕초 지도(반경 500m 원) 위에 **"✅ 서버 · DB · PostGIS 3.4 연결 완료"** 가 보이면 끝.
+브라우저에서 <http://localhost:8080/dev.html> → 정왕초 지도(반경 500m 원) 위에 **"✅ 서버 · DB · PostGIS 3.4 연결 완료"** 가 보이면 끝.
+서비스 화면은 <http://localhost:8080> (백엔드 API가 없을 때는 <http://localhost:8080/?mock>).
 
 ```bash
 ./gradlew test           # 테스트도 통과해야 함 (DB 켜진 상태에서)
@@ -67,7 +68,7 @@ docker compose up -d
 
 - [ ] `java -version` 이 17 이상
 - [ ] `docker compose ps` 에서 `ansimheung-db` 가 `healthy`
-- [ ] <http://localhost:8080> 에 지도 + ✅ 문구
+- [ ] <http://localhost:8080/dev.html> 에 지도 + ✅ 문구
 - [ ] `./gradlew test` 성공
 - [ ] `git switch develop` 후 `feature/test-본인이름` 브랜치로 PR 한 번 올려보기 → CI 초록불
 
@@ -101,7 +102,7 @@ docker compose up -d
 │   ├── db/migration/           Flyway DB 스키마 (V1__init_schema.sql …)
 │   ├── application.yml         공통 설정 + 서비스 정책값(ansimheung.*)
 │   ├── application-local.yml   로컬 DB 접속 정보
-│   └── static/                 프론트 (index.html, js/api.js = API 호출 도우미, mock/ = 가짜 응답)
+│   └── static/                 프론트 (index.html = 서비스 화면, dev.html = 연결 확인, js/, mock/ = 가짜 응답)
 └── .github/                    CI, PR · 이슈 템플릿
 ```
 
@@ -119,7 +120,7 @@ docker compose up -d
 | `Schema-validation: missing table/column` | 엔티티에 맞는 마이그레이션(V2…)을 안 만들었음 (`ddl-auto: validate`) |
 | VS Code에서 import 빨간 줄 | 명령 팔레트(Ctrl+Shift+P) → `Java: Clean Java Language Server Workspace` |
 | 포트 8080 사용 중 | 이전에 띄운 서버가 살아 있음 → 그 터미널에서 Ctrl+C |
-| 프론트에서 POST가 `403` | CSRF 토큰 누락 → `fetch` 대신 `static/js/api.js`의 `api.post()` 사용 |
+| 프론트에서 POST가 `403` | CSRF 토큰 누락 → `fetch` 직접 쓰지 말고 `static/js/http.js`(또는 `api.js`) 사용 |
 
 ## 개발 규칙 요약
 
@@ -134,11 +135,26 @@ docker compose up -d
 | DB 테이블 추가·변경 | `src/main/resources/db/migration/V2__설명.sql` 새 파일 추가 (이미 머지된 V1 수정 ❌). 그림은 [docs/erd.md](docs/erd.md) |
 
 ### 프론트
+ES 모듈 + Leaflet(`static/vendor/leaflet`, 설치·CDN 불필요). Spring이 `static/`을 그대로 서빙 → 같은 출처라 CORS 설정 없음.
+
+| 파일 | 역할 |
+|---|---|
+| `index.html` · `css/style.css` | 화면 구조·스타일 (데스크톱·모바일) |
+| `js/app.js` | 화면 흐름 (지도·제보·상세·경로·알림·관리자) |
+| `js/map.js` | Leaflet 지도·마커·경로 선 |
+| `js/api.js` | **화면용 API 어댑터** — app.js 는 이것만 호출 |
+| `js/mappers.js` | 서버 응답(노션 API 명세 · `mock/*.json`) ↔ 화면 모델 변환. 필드명이 바뀌면 여기만 수정 |
+| `js/http.js` | fetch 래퍼 — CSRF(`X-XSRF-TOKEN`)·오류(`{code,message,fields}`)·`?mock` 처리 |
+| `js/config.js` | `GET /api/config` 로 학교 좌표·반경 로드 (하드코딩 ❌) |
+| `js/labels.js` | 유형·시간대·상태 라벨과 아이콘, 경로 화면 예시 출발지 |
+
 | 하고 싶은 것 | 방법 |
 |---|---|
-| API 호출 | `fetch` 대신 `api.get()` / `api.post()` (`static/js/api.js`) — CSRF·오류 처리 자동 |
-| 오류 표시 | `catch (e) { alert(e.message) }` — `e.code`, `e.fields` 도 있음 |
-| 백엔드 없이 화면 작업 | 주소 끝에 **`?mock`** → <http://localhost:8080/?mock> . `static/mock/*.json` 가짜 응답 사용 |
-| 학교 좌표·반경 | 하드코딩 ❌ → `api.get('/api/config')` |
+| 새 API 호출 추가 | `api.js` 에 메서드 추가 → 응답 변환은 `mappers.js` → `mock/` 에 같은 모양 JSON + `http.js` `MOCK_ROUTES` 한 줄 |
+| 오류 표시 | `catch (e) { toast(e.message) }` — `e.status`, `e.code`, `e.fields` 도 있음 |
+| 백엔드 없이 화면 작업 | 주소 끝에 **`?mock`** → <http://localhost:8080/?mock> . 로그인 창의 체험 버튼으로 회원/관리자 전환 |
+| 변환 테스트 | `node --test src/test/js/mappers.test.mjs` (Node 20+) |
+| 위험점수 표시 | 서버 점수(최대 9.0)를 100점 만점으로 환산해 표시, 마커 색은 서버 `level` 그대로 (`mappers.js` `toDisplayScore`) |
+| 제보 제목 | 서버에는 제목 칸이 없어 `"제목\n설명"` 으로 합쳐 `description`(200자)에 저장, 상세에서 다시 나눔 |
 
 협업 규칙은 [CONTRIBUTING.md](CONTRIBUTING.md).

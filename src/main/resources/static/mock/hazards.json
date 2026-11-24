@@ -18,7 +18,8 @@
         "score": 6.0,
         "level": "HIGH",
         "empathyCount": 3,
-        "reportCount": 2
+        "reportCount": 2,
+        "createdAt": "2026-11-05T07:50:00+09:00"
       }
     },
     {
@@ -38,7 +39,8 @@
         "score": 3.6,
         "level": "HIGH",
         "empathyCount": 5,
-        "reportCount": 3
+        "reportCount": 3,
+        "createdAt": "2026-11-04T08:10:00+09:00"
       }
     },
     {
@@ -58,7 +60,8 @@
         "score": 2.4,
         "level": "MEDIUM",
         "empathyCount": 1,
-        "reportCount": 1
+        "reportCount": 1,
+        "createdAt": "2026-11-03T15:30:00+09:00"
       }
     },
     {
@@ -78,7 +81,8 @@
         "score": 1.4,
         "level": "MEDIUM",
         "empathyCount": 0,
-        "reportCount": 1
+        "reportCount": 1,
+        "createdAt": "2026-11-02T19:20:00+09:00"
       }
     },
     {
@@ -98,7 +102,8 @@
         "score": 0.5,
         "level": "RESOLVED",
         "empathyCount": 2,
-        "reportCount": 1
+        "reportCount": 1,
+        "createdAt": "2026-10-28T08:00:00+09:00"
       }
     }
   ]
