@@ -68,7 +68,7 @@
 | Method | 경로 | 권한 | 요청 | 응답 (mock) | 이슈 |
 |---|---|---|---|---|---|
 | GET | `/api/health` | 불필요 | — | `{server, database, postgis, postgisDistanceTestM}` | 완료 |
-| GET | `/api/config` | 불필요 | — | `config.json` | 완료 |
+| GET | `/api/config` | 불필요 | — | `config.json` + `demoData`(시드 적재 상태면 true → 화면에 DEMO 배지) | 완료 (`demoData`는 #15) |
 | POST | `/api/auth/signup` | 불필요 | `{email, password, nickname, ageConfirmed, privacyAgreed}` | 201 `{id}` | #9 |
 | POST | `/api/auth/login` | 불필요 | `{email, password}` | `me.json` + 세션 쿠키 | #9 |
 | POST | `/api/auth/logout` | 회원 | — | 204 | #9 |
@@ -80,11 +80,11 @@
 |---|---|---|---|---|---|
 | GET | `/api/hazards` | 불필요 | `?bbox=서,남,동,북&types=&timeSlot=` | `hazards.json` GeoJSON FeatureCollection. properties = `{id, type, timeSlot, status, score, level, empathyCount, reportCount, createdAt}` | #12 |
 | GET | `/api/hazards/{id}` | 불필요 | `?timeSlot=` | `hazard-detail.json` (승인된 사진·이력·`myEmpathy`·`myReported`, 작성자 없음) | #12 |
-| GET | `/api/hazards/nearby` | 회원 | `?lat=&lng=&type=` | `hazards-nearby.json` `{candidate \| null}` | #25 (P1) |
+| GET | `/api/hazards/nearby` | 회원 | `?lat=&lng=&type=` | `hazards-nearby.json` `{candidate \| null}` | #25 |
 | POST | `/api/reports` | 회원 | multipart `lat, lng, type, timeSlot, description?, photo?, mergeHazardId?` | 201 `reports-created.json` `{reportId, hazardId, merged}` | #11 (사진 #24, 묶기 #25) |
-| GET | `/api/photos/{id}` | 조건부 | — | image/jpeg·png. 미승인은 본인·ADMIN만, 아니면 404 | #24 (P1) |
-| POST | `/api/hazards/{id}/empathy` | 회원 | — | `empathy-on.json` `{empathyCount, myEmpathy:true}` (멱등) | #26 (P1) |
-| DELETE | `/api/hazards/{id}/empathy` | 회원 | — | `empathy-off.json` (멱등) | #26 (P1) |
+| GET | `/api/photos/{id}` | 조건부 | — | image/jpeg·png. 미승인은 본인·ADMIN만, 아니면 404 | #24 |
+| POST | `/api/hazards/{id}/empathy` | 회원 | — | `empathy-on.json` `{empathyCount, myEmpathy:true}` (멱등) | #26 |
+| DELETE | `/api/hazards/{id}/empathy` | 회원 | — | `empathy-off.json` (멱등) | #26 |
 | GET | `/api/me/reports` | 회원 | `?page=&size=` | `me-reports.json` 페이지 | 범위 제외 |
 | PATCH | `/api/reports/{id}` | 회원(본인) | `{description?, timeSlot?}` | `{id, description, timeSlot}` | 범위 제외 |
 | DELETE | `/api/reports/{id}` | 회원(본인) | — | 204 | 범위 제외 |
@@ -106,9 +106,9 @@
 | PATCH | `/api/admin/photos/{id}` | `{approved}` | `{id, approved}` | 범위 제외 |
 | GET | `/api/admin/export` | `?format=geojson\|csv` | 파일 | 범위 제외 |
 
-### 알림 · 공공데이터 (범위 제외)
-| Method | 경로 | 응답 (mock) |
-|---|---|---|
-| GET | `/api/me/notifications` | `me-notifications.json` `{unreadCount, items[]}` |
-| PATCH | `/api/me/notifications/{id}/read` | 204 |
-| GET | `/api/public-layers?kind=` | `public-layers.json` GeoJSON |
+### 알림 · 공공데이터
+| Method | 경로 | 권한 | 응답 (mock) | 이슈 |
+|---|---|---|---|---|
+| GET | `/api/me/notifications` | 회원 | `me-notifications.json` `{unreadCount, items[]}` | #35 |
+| PATCH | `/api/me/notifications/{id}/read` | 회원(본인) | 204 | #35 |
+| GET | `/api/public-layers?kind=` | 불필요 | `public-layers.json` GeoJSON (`CCTV`=시흥시 불법주정차 단속 CCTV, `SCHOOL_ZONE`=어린이보호구역 점) | #34 (P1) |

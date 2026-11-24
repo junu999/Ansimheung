@@ -26,5 +26,6 @@
   "limits": {
     "reportsPerDay": 10,
     "empathiesPerDay": 30
-  }
+  },
+  "demoData": true
 }
