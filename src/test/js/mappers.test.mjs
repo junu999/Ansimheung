@@ -77,6 +77,14 @@ test('제보 등록 필드: 명세(lat,lng,type,timeSlot,description) 이름과 
   assert.ok(f.description.startsWith('제목\n'));
 });
 
+test('제보 화면: 별도 제목 없이 설명 200자를 모두 보내고 빈 설명도 허용', () => {
+  const payload = { lat: 1, lng: 2, category: 'parking', timeBand: 'all' };
+  const fields = toReportFields({ ...payload, description: '가'.repeat(200) });
+  assert.equal(fields.description, '가'.repeat(200));
+  assert.equal(toReportFields({ ...payload, description: '' }).description, '');
+  assert.deepEqual(Object.keys(fields).sort(), ['description', 'lat', 'lng', 'timeSlot', 'type']);
+});
+
 test('제목/설명 왕복', () => {
   assert.deepEqual(splitDescription(joinDescription('횡단보도 앞', '차가 서 있어요')), { title: '횡단보도 앞', description: '차가 서 있어요' });
 });

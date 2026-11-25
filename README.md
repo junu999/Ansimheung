@@ -169,7 +169,7 @@ ES 모듈 + Leaflet(`static/vendor/leaflet`, 설치·CDN 불필요). Spring이 `
 | 백엔드 없이 화면 작업 | 주소 끝에 **`?mock`** → <http://localhost:8080/?mock> . 로그인 창의 체험 버튼으로 회원/관리자 전환 |
 | 변환 테스트 | `node --test src/test/js/mappers.test.mjs` (Node 20+) |
 | 위험점수 표시 | 서버 점수(최대 9.0)를 100점 만점으로 환산해 표시, 마커 색은 서버 `level` 그대로 (`mappers.js` `toDisplayScore`) |
-| 제보 제목 | 서버에는 제목 칸이 없어 `"제목\n설명"` 으로 합쳐 `description`(200자)에 저장, 상세에서 다시 나눔 |
+| 제보 설명 | 별도 제목 없이 선택 설명 `description`을 최대 200자 입력. 기존 제목+설명 형식의 제보도 상세 조회 가능 |
 
 ## 문서
 
