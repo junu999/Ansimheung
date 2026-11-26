@@ -17,6 +17,7 @@ import com.slink.ansimheung.hazard.Report;
 import com.slink.ansimheung.hazard.ReportRepository;
 import com.slink.ansimheung.hazard.StatusHistory;
 import com.slink.ansimheung.hazard.StatusHistoryRepository;
+import com.slink.ansimheung.notification.NotificationService;
 import com.slink.ansimheung.risk.RiskService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,15 +48,18 @@ public class AdminService {
     private final StatusHistoryRepository histories;
     private final UserRepository users;
     private final RiskService riskService;
+    private final NotificationService notificationService;
 
     public AdminService(HazardRepository hazards, ReportRepository reports, PhotoRepository photos,
-                        StatusHistoryRepository histories, UserRepository users, RiskService riskService) {
+                        StatusHistoryRepository histories, UserRepository users, RiskService riskService,
+                        NotificationService notificationService) {
         this.hazards = hazards;
         this.reports = reports;
         this.photos = photos;
         this.histories = histories;
         this.users = users;
         this.riskService = riskService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -124,13 +128,14 @@ public class AdminService {
                 List.copyOf(h.getStatus().allowedNext()), reportItems, photoItems, historyItems);
     }
 
-    /** 허용된 전이만 (아니면 409 STATE_CONFLICT) → 이력 저장 → 점수 재계산. 처리결과 알림은 #35 */
+    /** 허용된 전이만 (아니면 409 STATE_CONFLICT) → 이력 저장 → 점수 재계산 → 제보자 알림 (#35), 한 트랜잭션 */
     @Transactional
     public StatusChangeResponse changeStatus(Long id, HazardStatus next, String memo, Long adminId) {
         Hazard h = find(id);
         HazardStatus before = h.changeStatus(next);
         histories.save(StatusHistory.of(h.getId(), before, next, adminId, blankToNull(memo)));
         riskService.refresh(h);
+        notificationService.notifyStatusChanged(h, next);
         return new StatusChangeResponse(h.getId(), h.getStatus());
     }
 
