@@ -2,6 +2,8 @@ package com.slink.ansimheung.hazard;
 
 import com.slink.ansimheung.common.type.HazardStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
@@ -18,4 +20,14 @@ public interface HazardRepository extends JpaRepository<Hazard, Long> {
 
     /** 경로 비용에 들어가는 지점 (#13): 구간이 배정됐고, 숨김 아니고, 반려 아님. 개선완료 30일 숨김은 호출하는 쪽에서 */
     List<Hazard> findByEdgeIdIsNotNullAndHiddenFalseAndStatusNot(HazardStatus status);
+
+    /** 지도 조회 (#12): bbox(서,남,동,북) 안, 숨김·반려 제외. 개선완료 30일 숨김(P-11)은 호출하는 쪽에서 */
+    @Query(value = """
+            SELECT * FROM hazards
+            WHERE hidden = false AND status <> 'REJECTED'
+              AND ST_Intersects(location, ST_MakeEnvelope(:west, :south, :east, :north, 4326))
+            ORDER BY created_at DESC, id DESC
+            """, nativeQuery = true)
+    List<Hazard> findVisibleInBbox(@Param("west") double west, @Param("south") double south,
+                                   @Param("east") double east, @Param("north") double north);
 }
