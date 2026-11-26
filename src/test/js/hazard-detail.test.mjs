@@ -7,6 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 const mock = name => JSON.parse(readFileSync(new URL(`../../main/resources/static/mock/${name}`, import.meta.url)));
 const saved = Object.fromEntries(['document', 'window', 'location', 'history', 'matchMedia', 'fetch', 'setTimeout'].map(key => [key, globalThis[key]]));
 const nodes = new Map(), events = new Map(), pending = new Map(), timers = [];
+let holdList = false, resolveList;
 const node = key => {
   if (!nodes.has(key)) nodes.set(key, { innerHTML: '', hidden: false, classList: { toggle() {} }, setAttribute() {}, contains: () => false, querySelector: () => null });
   return nodes.get(key);
@@ -20,7 +21,7 @@ globalThis.setTimeout = (...args) => { const timer = saved.setTimeout(...args); 
 globalThis.fetch = async url => {
   if (url === '/api/config') return Response.json(mock('config.json'));
   if (url === '/api/me') return Response.json({ message: '로그인이 필요해요.' }, { status: 401 });
-  if (url.startsWith('/api/hazards?')) return Response.json(mock('hazards.json'));
+  if (url.startsWith('/api/hazards?')) return holdList ? new Promise(resolve => { resolveList = resolve; }) : Response.json(mock('hazards.json'));
   return new Promise(resolve => pending.set(url.split('/').at(-1), resolve));
 };
 await import('../../main/resources/static/js/app.js');
@@ -77,4 +78,27 @@ test('늦은 응답과 화면을 떠난 뒤의 응답은 현재 화면을 덮지
   respond('16', detail(16, '떠난 상세')); await abandoned;
   assert.match(node('#panel').innerHTML, /우리의 작은 관심이/);
   assert.ok(!node('#panel').innerHTML.includes('떠난 상세'));
+});
+
+
+test('먼저 시작한 지도 목록 조회가 최신 상세의 제목·이력을 지우지 않는다', async () => {
+  await click('nav-map');
+  holdList = true;
+  const list = click('retry-reports');
+  const opened = click('open-report', '12');
+  respond('12', detail(12, '유지할 상세 제목')); await opened;
+  resolveList(Response.json(mock('hazards.json'))); await list;
+  holdList = false;
+  assert.match(node('#panel').innerHTML, /유지할 상세 제목/);
+  assert.match(node('#panel').innerHTML, /처리 이력/);
+});
+
+
+test('작성 중 연 상세에서 다른 지점을 눌러도 작성 화면 복귀를 유지한다', async () => {
+  const first = click('duplicate-detail', '17'), second = click('open-report', '18');
+  respond('18', detail(18, '다른 지점')); await second;
+  respond('17', detail(17, '이전 지점')); await first;
+  assert.match(node('#panel').innerHTML, /data-action="back-to-draft"/);
+  await click('back-to-draft');
+  assert.match(node('#panel').innerHTML, /id="report-form"/);
 });

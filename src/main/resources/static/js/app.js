@@ -86,12 +86,12 @@ function navigate(view,{force=false}={}){
   if(matchMedia('(max-width:760px)').matches&&view!=='map')panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function requireLogin(action){if(state.user){action();return;}pendingAfterAuth=action;showAuth();}
-async function refreshReports(){if(state.view==='detail'&&(state.selectedId||state.detailId)){await openReport(state.selectedId||state.detailId,state.returnToReport);return;}state.loading=true;state.error='';render();try{state.reports=await api.getReports();}catch(error){state.error=error.message;}finally{state.loading=false;render();}}
+async function refreshReports(){if(state.view==='detail'&&(state.selectedId||state.detailId)){await openReport(state.selectedId||state.detailId,state.returnToReport);return;}const detailVersion=detailRequest;state.loading=true;state.error='';render();try{const reports=await api.getReports();if(state.view!=='detail'||detailVersion===detailRequest)state.reports=reports;}catch(error){state.error=error.message;}finally{state.loading=false;render();}}
 async function checkDuplicates(){const requestId=++duplicateRequest;if(!state.draft.position)return;try{const results=await api.duplicates({...state.draft.position,category:state.draft.category});if(requestId===duplicateRequest){state.duplicates=results;if(state.view==='report')render();}}catch(error){if(requestId===duplicateRequest)toast(error.message,true);}}
 async function openReport(id,fromDraft=false){
   const requestId=++detailRequest;
   state.detailId=String(id);state.selectedId=null;state.detailLoading=true;state.detailError='';state.detailNotFound=false;
-  state.view='detail';state.returnToReport=fromDraft;setSelection(null);mapUI?.clearRoutes();render();
+  state.view='detail';state.returnToReport=fromDraft||state.returnToReport;setSelection(null);mapUI?.clearRoutes();render();
   if(matchMedia('(max-width:760px)').matches)panel.scrollIntoView({behavior:'smooth',block:'start'});
   let report;
   try{
