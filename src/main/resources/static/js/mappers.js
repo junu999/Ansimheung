@@ -30,7 +30,7 @@ export function distanceM(a, b) {
   return 6371000 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
-// 선택 설명(최대 200자, V-09)을 보낸다. 기존 제목+설명 형식도 지원한다: "제목\n설명"
+// 제보 등록 시 화면의 "제목"과 "설명"을 서버 description(최대 200자, V-09) 하나로 합친다: "제목\n설명"
 export const DESCRIPTION_MAX = 200;
 export function joinDescription(title, description) {
   const t = String(title ?? '').trim(), d = String(description ?? '').trim();

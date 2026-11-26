@@ -18,7 +18,7 @@ after(() => {
 
 test('mock 등록: 응답 ID로 상세·목록을 조회하면 선택한 위치·유형·시간대가 유지된다', async () => {
   const before = await api.getReports();
-  const payload = { lat: 37.3419, lng: 126.7442, category: 'lighting', timeBand: 'evening', description: '가'.repeat(200) };
+  const payload = { lat: 37.3419, lng: 126.7442, category: 'lighting', timeBand: 'evening', title: '제목'.repeat(20), description: '가'.repeat(150) };
   const created = await api.createReport(payload);
   assert.deepEqual(Object.keys(created).sort(), ['hazardId', 'merged', 'reportId']);
   assert.equal(created.merged, false);
@@ -27,7 +27,8 @@ test('mock 등록: 응답 ID로 상세·목록을 조회하면 선택한 위치�
   assert.equal(detail.lng, payload.lng);
   assert.equal(detail.category, payload.category);
   assert.equal(detail.timeBand, payload.timeBand);
-  assert.equal(detail.title, payload.description);
+  assert.equal(detail.title, payload.title);
+  assert.equal(detail.description, payload.description);
   assert.equal(detail.myReported, true);
   const after = await api.getReports();
   assert.equal(after.length, before.length + 1);
@@ -35,12 +36,12 @@ test('mock 등록: 응답 ID로 상세·목록을 조회하면 선택한 위치�
   assert.ok(!before.some(r => r.id === String(created.hazardId)), '기존 마커와 다른 ID');
 });
 
-test('mock 등록: 선택 설명이 비어 있어도 등록되고 ID가 겹치지 않는다', async () => {
-  const payload = { lat: 37.341, lng: 126.743, category: 'sidewalk', timeBand: 'all', description: '' };
+test('mock 등록: 여러 제보의 ID와 제목·설명이 겹치지 않는다', async () => {
+  const payload = { lat: 37.341, lng: 126.743, category: 'sidewalk', timeBand: 'all', title: '보도 위험 제보', description: '보도에서 위험한 곳을 발견했어요' };
   const first = await api.createReport(payload), second = await api.createReport(payload);
   assert.notEqual(first.hazardId, second.hazardId);
   const detail = await api.getReport(second.hazardId);
-  assert.equal(detail.description, '');
-  assert.equal(detail.title, '보도단절 제보');
+  assert.equal(detail.description, payload.description);
+  assert.equal(detail.title, payload.title);
   assert.match(detail.createdAt, /\+09:00$/);
 });

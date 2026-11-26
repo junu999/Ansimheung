@@ -2,12 +2,13 @@ import { config } from './config.js';
 import { categories, riskNames } from './labels.js';
 import { icon, escapeHtml, riskLevel } from './utils.js';
 
-export function createMap({onReportClick,onSelect,onTileError,onTileReady,onReportPositionChange}) {
+export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMoveEnd,onReportPositionChange}) {
   if(!window.L) throw new Error('지도 구성요소를 불러오지 못했어요. 페이지를 새로고침해 주세요.');
   const L=window.L;
   const {lat:sLat,lng:sLng}=config.school;
   // 시범 지역(반경 500m)보다 조금 넓게 이동 범위를 제한
   const map=L.map('map',{zoomControl:false,minZoom:15,maxZoom:19,scrollWheelZoom:true,maxBounds:[[sLat-.009,sLng-.011],[sLat+.009,sLng+.011]],maxBoundsViscosity:.8}).setView([sLat,sLng],17);
+  const getBounds=()=>{const bounds=map.getBounds();return {west:bounds.getWest(),south:bounds.getSouth(),east:bounds.getEast(),north:bounds.getNorth()};};
   const attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
   let loaded=0, failed=0, selectionMode=null, selectedMarker=null, originMarker=null, zonesVisible=false;
   const tiles=L.tileLayer(config.basemap.tileUrl,{maxZoom:19,attribution}).addTo(map);
@@ -22,7 +23,7 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onRepo
   map.on('click',event=>{if(selectionMode==='report')map.panTo(event.latlng);else if(selectionMode)onSelect({lat:event.latlng.lat,lng:event.latlng.lng},selectionMode);});
   const reportPosition=()=>{if(selectionMode==='report'){const center=map.getCenter();onReportPositionChange?.({lat:center.lat,lng:center.lng});}};
   map.on('movestart',()=>{if(selectionMode==='report')onReportPositionChange?.(null);});
-  map.on('moveend',reportPosition);
+  map.on('moveend',()=>{reportPosition();if(!selectionMode)onMoveEnd?.(getBounds());});
   map.on('zoomend',()=>document.querySelector('.map-section').classList.toggle('map-zoomed-out',map.getZoom()<15));
   const setSelected=(pos,type='report')=>{
     if(selectedMarker)map.removeLayer(selectedMarker);
@@ -42,7 +43,8 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onRepo
       });
     },
     focusReport(report) { map.flyTo([report.lat,report.lng],18,{duration:.6}); markers.get(report.id)?.openTooltip(); },
-    center() { map.flyTo([config.school.lat-.00015,config.school.lng-.0004],17,{duration:.6}); },
+    center() { map.flyTo([sLat,sLng],17,{duration:.6}); },
+    getBounds,
     select(mode,pos) {selectionMode=mode;document.getElementById('map').classList.toggle('is-selecting',Boolean(mode));setSelected(mode==='report'?null:pos,mode);if(mode==='report'&&pos)map.panTo([pos.lat,pos.lng],{animate:false});reportPosition();},
     selectionPoint: setSelected,
     flyTo(pos) {map.flyTo([pos.lat,pos.lng],17,{duration:.5});},
