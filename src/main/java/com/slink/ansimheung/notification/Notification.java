@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 
 import java.time.OffsetDateTime;
 
-/** 처리결과 알림 (notifications). 이번 제출 범위 제외(#28) — 테이블만 매핑해 둠 */
+/** 처리결과 알림 (notifications). 관리자 상태 변경 시 제보자에게 생성 (#35, NotificationService) */
 @Entity
 @Table(name = "notifications")
 public class Notification {

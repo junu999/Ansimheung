@@ -110,9 +110,14 @@
 | PATCH | `/api/admin/photos/{id}` | `{approved}` | `{id, approved}` | 범위 제외 |
 | GET | `/api/admin/export` | `?format=geojson\|csv` | 파일 | 범위 제외 |
 
-### 알림 · 공공데이터 (범위 제외)
+- 목록: `sort` 생략 = 최신순(`createdAt` 내림차순), `SCORE` = 조회 시각 시간대(T)를 곱한 점수 높은 순, `OLDEST` = 오래된 순. `hidden` 생략 = 숨김 포함 전체. `size` 기본 20 · 최대 100 (넘으면 100으로).
+- `counts`는 필터와 관계없는 전체 개수: 상태별은 숨김 제외, 숨김 지점은 `HIDDEN`에 따로.
+- 상태 변경: `HazardStatus.canTransitionTo()`로 검사(아니면 409 `STATE_CONFLICT`) → `status_histories`에 관리자·메모 저장 → 점수 재계산 → 그 지점 제보자(작성자 없는 제보 제외)에게 알림 `제보하신 지점이 '확인중'으로 바뀌었어요` (#35). 개선완료(S=0.3) 즉시 경로에 반영.
+- 상세의 `reports[].authorNickname`·`history[].adminNickname`은 작성자 없음·시스템 이력이면 `null`.
+
+### 알림 (회원) · 공공데이터
 | Method | 경로 | 응답 (mock) |
 |---|---|---|
-| GET | `/api/me/notifications` | `me-notifications.json` `{unreadCount, items[]}` |
-| PATCH | `/api/me/notifications/{id}/read` | 204 |
+| GET | `/api/me/notifications` | `me-notifications.json` `{unreadCount, items[]}` 최신순 (#35) |
+| PATCH | `/api/me/notifications/{id}/read` | 204. 남의 것·없는 것은 `NOT_FOUND`, 이미 읽었어도 204 (#35) |
 | GET | `/api/public-layers?kind=` | `public-layers.json` GeoJSON |
