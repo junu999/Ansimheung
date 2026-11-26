@@ -12,8 +12,9 @@ const school = () => config.school;
 const liked = new Map(); // hazardId → 내가 공감했는지 (공감 버튼이 POST/DELETE 중 무엇을 보낼지 결정)
 const remember = (r) => { liked.set(r.id, r.liked); return r; };
 
-// 시범 지역 전체를 덮는 bbox (서,남,동,북)
-function pilotBbox() {
+// 현재 지도 영역의 bbox (서,남,동,북). 지도가 없으면 시범 지역 전체를 조회한다.
+function toBbox(bounds) {
+  if (bounds) return [bounds.west, bounds.south, bounds.east, bounds.north].map((n) => n.toFixed(6)).join(',');
   const { lat, lng, radius } = school();
   const dLat = radius / 111320, dLng = radius / (111320 * Math.cos(lat * Math.PI / 180));
   return [lng - dLng, lat - dLat, lng + dLng, lat + dLat].map((n) => n.toFixed(6)).join(',');
@@ -55,9 +56,9 @@ export const api = {
   },
 
   // ---------- 위험 지점 (#12) ----------
-  async getReports({ admin = false } = {}) {
+  async getReports({ admin = false, bounds } = {}) {
     if (!admin) {
-      const fc = await http.get(`/api/hazards?bbox=${pilotBbox()}`);
+      const fc = await http.get(`/api/hazards?bbox=${toBbox(bounds)}`);
       return fromHazardCollection(fc, school()).map(remember);
     }
     // 관리자 목록은 설명·사진·다음 상태가 필요해서 상세를 함께 받는다 (시범 규모 30건 내외)
