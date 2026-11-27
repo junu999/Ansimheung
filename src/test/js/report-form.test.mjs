@@ -45,3 +45,16 @@ test('mock 등록: 여러 제보의 ID와 제목·설명이 겹치지 않는다'
   assert.equal(detail.title, payload.title);
   assert.match(detail.createdAt, /\+09:00$/);
 });
+
+test('mock 묶기: mergeHazardId를 보내면 새 마커 없이 기존 지점에 더한다 (#25)', async () => {
+  const base = { lat: 37.341, lng: 126.743, category: 'parking', timeBand: 'morning', title: '후문 주차', description: '차가 서 있어요' };
+  const first = await api.createReport(base);
+  const before = await api.getReports();
+  const merged = await api.createReport({ ...base, mergeHazardId: String(first.hazardId) });
+  assert.equal(merged.merged, true);
+  assert.equal(merged.hazardId, first.hazardId);
+  const after = await api.getReports();
+  assert.equal(after.length, before.length, '마커 수 그대로');
+  assert.equal(after.find(r => r.id === String(first.hazardId)).reportCount, 2, '제보 수 2');
+});
+
