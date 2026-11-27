@@ -42,6 +42,15 @@ test('선택을 마치면 bbox 재조회 콜백이 다시 동작하고 경로 �
   assert.deepEqual(queries.at(-1), { west: 126.74, south: 37.34, east: 126.75, north: 37.35 });
 });
 
+test('제보 모드에서 전달된 마커 클릭은 중심만 옮기고 위치를 자동 확정하지 않는다', () => {
+  ui.select('report');const beforeQueries=queries.length,beforeSelections=selections.length;
+  const target={lat:37.3415,lng:126.744};emit('click',{latlng:target});
+  assert.deepEqual(map.getCenter(),target);
+  assert.deepEqual(positions.at(-1),target);
+  assert.equal(queries.length,beforeQueries);
+  assert.equal(selections.length,beforeSelections);
+});
+
 test('학교 중심 복귀는 설정 좌표를 그대로 사용한다', () => {
   ui.center();
   assert.deepEqual(focused, [config.school.lat, config.school.lng]);

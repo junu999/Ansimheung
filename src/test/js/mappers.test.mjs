@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  fromHazardCollection, fromHazardDetail, fromNearby, fromRoutes, fromNotifications, fromPublicLayers,
+  fromHazardCollection, fromHazardDetail, fromNearby, fromRoutes, groupRoutes, fromNotifications, fromPublicLayers,
   toReportFields, toSignup, joinDescription, splitDescription, toDisplayScore, TYPE,
 } from '../../main/resources/static/js/mappers.js';
 
@@ -87,6 +87,23 @@ test('경로: mode → shortest/balanced/safest, LineString [경도,위도] → 
   assert.equal(s.distance, 340);
   assert.equal(s.duration, 6);
   assert.equal(s.exposure, toDisplayScore(5.4));
+});
+
+test('같은 균형·안전 경로는 한 카드로 묶고 세 전환 ID는 유지한다', () => {
+  const { routes } = fromRoutes(mock('routes.json'));
+  const groups = groupRoutes(routes);
+  assert.equal(groups.length, 2);
+  assert.equal(groups[1].name, '균형·안전');
+  assert.deepEqual(groups[1].ids, ['balanced', 'safest']);
+  assert.equal(routes.length, 3);
+  assert.equal(routes[1].name, '균형');
+});
+
+test('세 경로가 모두 같으면 하나로 묶고 경로가 다르면 별도 카드로 남긴다', () => {
+  const { routes } = fromRoutes(mock('routes.json'));
+  assert.equal(groupRoutes(routes.map(r => ({ ...r, coordinates: routes[0].coordinates })))[0].name, '최단·균형·안전');
+  assert.equal(groupRoutes(routes.map((r, i) => ({ ...r, coordinates: [...r.coordinates, [i, i]] }))).length, 3);
+  assert.deepEqual(groupRoutes([]), []);
 });
 
 test('알림: items → 화면 알림, hazardId → reportId', () => {
