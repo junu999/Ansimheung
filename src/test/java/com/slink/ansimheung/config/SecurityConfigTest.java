@@ -90,6 +90,7 @@ class SecurityConfigTest {
     void 회원_전용_API는_비로그인_401() throws Exception {
         mockMvc.perform(get("/api/me")).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/me/notifications")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/auth/logout").with(csrf())).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/hazards/nearby").param("lat", "37.34").param("lng", "126.74").param("type", "SPEEDING"))
                 .andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/reports").with(csrf())).andExpect(status().isUnauthorized());

@@ -1,0 +1,29 @@
+### 회원가입·로그인 (#9) — VS Code REST Client 확장으로 "Send Request" 클릭
+### POST 는 CSRF 토큰이 필요함: 먼저 GET 을 한 번 보내 XSRF-TOKEN 쿠키를 받고, 그 값을 아래 @xsrf 에 붙여 넣기
+### (REST Client 는 쿠키를 자동으로 저장·전송하므로 로그인 세션도 이어짐)
+
+GET http://localhost:8080/api/config
+
+###
+@xsrf = 여기에_XSRF-TOKEN_쿠키값
+
+### 시연 관리자 로그인 (계정은 README "시연 계정")
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+X-XSRF-TOKEN: {{xsrf}}
+
+{ "email": "admin@ansimheung.local", "password": "ansim1234" }
+
+### 내 정보 → {id, nickname, role}
+GET http://localhost:8080/api/me
+
+### 로그아웃 → 204
+POST http://localhost:8080/api/auth/logout
+X-XSRF-TOKEN: {{xsrf}}
+
+### 회원가입 → 201 {id}  (테스트용 이메일만, 실제 개인정보 넣지 말 것)
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+X-XSRF-TOKEN: {{xsrf}}
+
+{ "email": "new-user@ansimheung.local", "password": "abcd1234", "nickname": "새이웃", "ageConfirmed": true, "privacyAgreed": true }

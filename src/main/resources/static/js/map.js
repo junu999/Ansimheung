@@ -6,8 +6,8 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMove
   if(!window.L) throw new Error('지도 구성요소를 불러오지 못했어요. 페이지를 새로고침해 주세요.');
   const L=window.L;
   const {lat:sLat,lng:sLng}=config.school;
-  // 시범 지역(반경 500m)보다 조금 넓게 이동 범위를 제한
-  const map=L.map('map',{zoomControl:false,minZoom:15,maxZoom:19,scrollWheelZoom:true,maxBounds:[[sLat-.009,sLng-.011],[sLat+.009,sLng+.011]],maxBoundsViscosity:.8}).setView([sLat,sLng],17);
+  const pilotBounds=L.latLng(sLat,sLng).toBounds(config.school.radius*2);
+  const map=L.map('map',{zoomControl:false,minZoom:15,maxZoom:19,scrollWheelZoom:true,maxBounds:pilotBounds.pad(1),maxBoundsViscosity:.8}).setView([sLat,sLng],17);
   const getBounds=()=>{const bounds=map.getBounds();return {west:bounds.getWest(),south:bounds.getSouth(),east:bounds.getEast(),north:bounds.getNorth()};};
   const attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
   let loaded=0, failed=0, selectionMode=null, selectedMarker=null, originMarker=null, zonesVisible=false;
@@ -35,7 +35,7 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMove
       reportLayer.clearLayers();zoneLayer.clearLayers();markers.clear();
       reports.forEach(report=>{
         const level=riskLevel(report), category=categories[report.category] || categories.sidewalk;
-        const marker=L.marker([report.lat,report.lng],{icon:L.divIcon({className:`report-div-icon ${report.id===selectedId?'is-selected':''}`,html:`<span class="report-map-pin risk-${level}">${icon(report.status==='resolved'?'check':category.icon)}</span>`,iconSize:[38,44],iconAnchor:[19,38]}),title:`${report.title} · ${riskNames[level]}`,alt:report.title,riseOnHover:true});
+        const marker=L.marker([report.lat,report.lng],{icon:L.divIcon({className:`report-div-icon ${report.id===selectedId?'is-selected':''}`,html:`<span class="report-map-pin risk-${level}">${icon(report.status==='resolved'?'check':category.icon)}</span>`,iconSize:[38,44],iconAnchor:[19,38]}),title:`${report.title} · ${riskNames[level]}`,alt:report.title,riseOnHover:true,zIndexOffset:report.id===selectedId?700:0});
         marker.bindTooltip(`${escapeHtml(report.title)} <span class="tooltip-risk">${riskNames[level]}</span>`,{direction:'top',offset:[0,-36]});
         marker.on('click',()=>{if(!selectionMode)onReportClick(report.id);});
         marker.addTo(reportLayer);markers.set(report.id,marker);

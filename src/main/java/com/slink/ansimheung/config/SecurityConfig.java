@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * 보안 설정 — 세션 로그인 + CSRF 쿠키 + 권한 규칙 (docs/api.md "권한" 열과 같음).
  * - /api/admin/** → ADMIN
- * - 제보 등록·수정·삭제, 공감, 묶기 후보, 내 정보(/api/me/**) → 회원
+ * - 제보 등록·수정·삭제, 공감, 묶기 후보, 내 정보(/api/me/**), 로그아웃 → 회원
  * - 나머지(지도·상세·경로·설정·화면 파일) → 누구나
  * 새 회원 전용 API 를 만들면 아래 MEMBER 규칙에 한 줄 추가하고 SecurityConfigTest 에도 한 줄 추가할 것.
  */
@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name())
                         // MEMBER — 로그인 필요
                         .requestMatchers("/api/me", "/api/me/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/reports").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/reports/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/reports/**").authenticated()

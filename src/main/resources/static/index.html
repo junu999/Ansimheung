@@ -62,7 +62,7 @@
     <section class="map-section" aria-label="정왕초 주변 지도">
       <div id="map" aria-label="학교 주변 위험 제보 지도"></div>
       <div class="map-topbar">
-        <div class="area-label"><span class="status-dot"></span><strong id="area-school">정왕초등학교</strong><span class="area-divider"></span>주변 500m <span class="pilot-tag">시범지역</span></div>
+        <div class="area-label"><span class="status-dot"></span><strong id="area-school"></strong><span class="area-divider"></span><span id="area-radius"></span><span class="pilot-tag">시범지역</span></div>
         <button class="map-layer-button" data-action="toggle-zones" aria-pressed="false" title="위험 범위 표시"><svg class="icon"><use href="#i-layers"/></svg><span>위험 범위</span></button>
       </div>
       <div id="map-selection" class="map-selection" role="status" hidden></div>
@@ -75,7 +75,7 @@
       </div>
       <div class="map-legend"><span><i class="legend-dot high"></i>위험 높음</span><span><i class="legend-dot medium"></i>위험 보통</span><span><i class="legend-dot resolved"></i>처리완료</span></div>
       <div id="route-legend" class="route-legend" hidden></div>
-      <div class="demo-map-label"><span class="demo-badge">DEMO</span>가짜 데이터(mock) 모드예요</div>
+      <div class="demo-map-label" hidden><span class="demo-badge">DEMO</span>가짜 데이터(mock) 모드예요</div>
     </section>
   </main>
   <div id="modal-root"></div>

@@ -38,6 +38,7 @@ test('선택을 마치면 bbox 재조회 콜백이 다시 동작하고 경로 �
   emit('click', { latlng: center });
   assert.deepEqual(selections.at(-1), [center, 'route']);
   ui.select(null); emit('moveend');
+  assert.equal(queries.length, 1, 'moveend 재조회 콜백을 중복 등록하지 않는다');
   assert.deepEqual(queries.at(-1), { west: 126.74, south: 37.34, east: 126.75, north: 37.35 });
 });
 
