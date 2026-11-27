@@ -16,7 +16,7 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMove
   tiles.on('tileerror',()=>{failed++;if(loaded===0 && failed>=3)onTileError();});
   const radius=L.circle([config.school.lat,config.school.lng],{radius:config.school.radius,color:'#4a9679',weight:1.5,dashArray:'5 9',fillColor:'#81b196',fillOpacity:.035,interactive:false}).addTo(map);
   const schoolIcon=L.divIcon({className:'school-div-icon',html:`<div class="school-map-symbol">${icon('school')}</div><div class="school-map-label">${escapeHtml(config.school.name)}<span>우리의 목적지</span></div>`,iconSize:[144,68],iconAnchor:[72,34]});
-  const school=L.marker([config.school.lat,config.school.lng],{icon:schoolIcon,zIndexOffset:600,title:config.school.name}).addTo(map);
+  const school=L.marker([config.school.lat,config.school.lng],{icon:schoolIcon,zIndexOffset:600,title:config.school.name,bubblingMouseEvents:true}).addTo(map);
   school.bindTooltip(escapeHtml(`${config.school.name} · ${config.school.address || ''}`),{direction:'bottom',offset:[0,40]});
   let reportLayer=L.layerGroup().addTo(map), zoneLayer=L.layerGroup(), routeLayer=L.layerGroup().addTo(map);
   const markers=new Map();
@@ -33,7 +33,7 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMove
       reportLayer.clearLayers();zoneLayer.clearLayers();markers.clear();
       reports.forEach(report=>{
         const level=riskLevel(report), category=categories[report.category] || categories.sidewalk;
-        const marker=L.marker([report.lat,report.lng],{icon:L.divIcon({className:`report-div-icon ${report.id===selectedId?'is-selected':''}`,html:`<span class="report-map-pin risk-${level}">${icon(report.status==='resolved'?'check':category.icon)}</span>`,iconSize:[38,44],iconAnchor:[19,38]}),title:`${report.title} · ${riskNames[level]}`,alt:report.title,riseOnHover:true});
+        const marker=L.marker([report.lat,report.lng],{icon:L.divIcon({className:`report-div-icon ${report.id===selectedId?'is-selected':''}`,html:`<span class="report-map-pin risk-${level}">${icon(report.status==='resolved'?'check':category.icon)}</span>`,iconSize:[38,44],iconAnchor:[19,38]}),title:`${report.title} · ${riskNames[level]}`,alt:report.title,riseOnHover:true,bubblingMouseEvents:true});
         marker.bindTooltip(`${escapeHtml(report.title)} <span class="tooltip-risk">${riskNames[level]}</span>`,{direction:'top',offset:[0,-36]});
         marker.on('click',()=>{if(!selectionMode)onReportClick(report.id);});
         marker.addTo(reportLayer);markers.set(report.id,marker);
