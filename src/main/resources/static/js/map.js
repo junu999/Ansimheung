@@ -21,6 +21,7 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMove
   school.bindTooltip(escapeHtml(`${config.school.name} · ${config.school.address || ''}`),{direction:'bottom',offset:[0,40]});
   let reportLayer=L.layerGroup().addTo(map), zoneLayer=L.layerGroup(), routeLayer=L.layerGroup().addTo(map);
   const publicLayer=L.layerGroup();let publicVisible=false, publicSources=[];
+  let meMarker=null, meAccuracy=null;   // 내 위치 (브라우저 안에서만, 서버로 보내지 않음)
   const markers=new Map();
   map.on('click',event=>{if(selectionMode==='report')map.panTo(event.latlng);else if(selectionMode)onSelect({lat:event.latlng.lat,lng:event.latlng.lng},selectionMode);});
   const reportPosition=()=>{if(selectionMode==='report'){const center=map.getCenter();onReportPositionChange?.({lat:center.lat,lng:center.lng});}};
@@ -68,6 +69,14 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMove
       else{map.removeLayer(publicLayer);publicSources.forEach(s=>map.attributionControl.removeAttribution(s));}
       return publicVisible;
     },
+    showMe(pos,accuracy) {
+      const latlng=[pos.lat,pos.lng], radius=Math.min(Number(accuracy)||0,150);
+      if(!meMarker){
+        meAccuracy=L.circle(latlng,{radius,color:'#2f7bf5',weight:1,fillColor:'#2f7bf5',fillOpacity:.12,interactive:false}).addTo(map);
+        meMarker=L.marker(latlng,{icon:L.divIcon({className:'me-div-icon',html:'<span class="me-dot"></span>',iconSize:[20,20],iconAnchor:[10,10]}),zIndexOffset:900,interactive:false,keyboard:false}).addTo(map);
+      }else{meMarker.setLatLng(latlng);meAccuracy.setLatLng(latlng).setRadius(radius);}
+    },
+    hideMe() {if(meMarker){map.removeLayer(meMarker);map.removeLayer(meAccuracy);}meMarker=null;meAccuracy=null;},
     clearRoutes() {routeLayer.clearLayers();if(originMarker)map.removeLayer(originMarker);originMarker=null;},
     routes(routes,selectedId,origin,{fit=true}={}) {
       routeLayer.clearLayers();
