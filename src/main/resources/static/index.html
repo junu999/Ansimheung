@@ -63,7 +63,10 @@
       <div id="map" aria-label="학교 주변 위험 제보 지도"></div>
       <div class="map-topbar">
         <div class="area-label"><span class="status-dot"></span><strong id="area-school"></strong><span class="area-divider"></span><span id="area-radius"></span><span class="pilot-tag">시범지역</span></div>
-        <button class="map-layer-button" data-action="toggle-zones" aria-pressed="false" title="위험 범위 표시"><svg class="icon"><use href="#i-layers"/></svg><span>위험 범위</span></button>
+        <div class="map-layer-buttons">
+          <button class="map-layer-button" data-action="toggle-zones" aria-pressed="false" title="위험 범위 표시"><svg class="icon"><use href="#i-layers"/></svg><span>위험 범위</span></button>
+          <button class="map-layer-button" data-action="toggle-public" aria-pressed="false" title="공공데이터 표시 (불법주정차 단속 CCTV·어린이보호구역)"><svg class="icon"><use href="#i-camera"/></svg><span>공공데이터</span></button>
+        </div>
       </div>
       <div id="map-selection" class="map-selection" role="status" hidden></div>
       <div id="map-error" class="map-error" hidden><svg class="icon"><use href="#i-map"/></svg><div><strong>지도 배경을 불러오지 못했어요</strong><span>인터넷 연결을 확인한 뒤 다시 시도해 주세요.</span></div><button data-action="retry-tiles">다시 시도</button></div>

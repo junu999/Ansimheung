@@ -1,6 +1,7 @@
 import { config } from './config.js';
 import { categories, riskNames } from './labels.js';
 import { icon, escapeHtml, riskLevel } from './utils.js';
+import { PUBLIC_KIND_LABELS } from './mappers.js';
 
 export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMoveEnd}) {
   if(!window.L) throw new Error('지도 구성요소를 불러오지 못했어요. 페이지를 새로고침해 주세요.');
@@ -19,6 +20,7 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMove
   const school=L.marker([config.school.lat,config.school.lng],{icon:schoolIcon,zIndexOffset:600,title:config.school.name}).addTo(map);
   school.bindTooltip(escapeHtml(`${config.school.name} · ${config.school.address || ''}`),{direction:'bottom',offset:[0,40]});
   let reportLayer=L.layerGroup().addTo(map), zoneLayer=L.layerGroup(), routeLayer=L.layerGroup().addTo(map);
+  const publicLayer=L.layerGroup();let publicVisible=false, publicSources=[];
   const markers=new Map();
   map.on('click',event=>{if(selectionMode)onSelect({lat:event.latlng.lat,lng:event.latlng.lng},selectionMode);});
   map.on('zoomend',()=>document.querySelector('.map-section').classList.toggle('map-zoomed-out',map.getZoom()<15));
@@ -49,6 +51,21 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMove
     zoomIn:()=>map.zoomIn(), zoomOut:()=>map.zoomOut(),
     retryTiles() {loaded=0;failed=0;tiles.redraw();},
     toggleZones() {zonesVisible=!zonesVisible;if(zonesVisible)zoneLayer.addTo(map);else map.removeLayer(zoneLayer);return zonesVisible;},
+    // 공공데이터 (#34): 표시 전용. 켜면 출처·기준일을 지도 출처 표기란에 함께 보여준다 (공공누리 출처 표기)
+    renderPublicLayers({items,sources}) {
+      publicLayer.clearLayers();publicSources=sources.map(s=>escapeHtml(s));
+      items.forEach(item=>{
+        const label=PUBLIC_KIND_LABELS[item.kind];
+        L.marker([item.lat,item.lng],{icon:L.divIcon({className:'public-div-icon',html:`<span class="public-map-pin public-${item.kind}">${icon(item.kind==='cctv'?'camera':'school')}</span>`,iconSize:[26,26],iconAnchor:[13,13]}),title:`${label} · ${item.name}`,keyboard:false})
+          .bindTooltip(`<strong>${escapeHtml(label)}</strong><br>${escapeHtml(item.name)}`,{direction:'top',offset:[0,-12]}).addTo(publicLayer);
+      });
+    },
+    togglePublicLayers() {
+      publicVisible=!publicVisible;
+      if(publicVisible){publicLayer.addTo(map);publicSources.forEach(s=>map.attributionControl.addAttribution(s));}
+      else{map.removeLayer(publicLayer);publicSources.forEach(s=>map.attributionControl.removeAttribution(s));}
+      return publicVisible;
+    },
     clearRoutes() {routeLayer.clearLayers();if(originMarker)map.removeLayer(originMarker);originMarker=null;},
     routes(routes,selectedId,origin,{fit=true}={}) {
       routeLayer.clearLayers();
