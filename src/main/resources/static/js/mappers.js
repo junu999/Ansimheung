@@ -111,6 +111,22 @@ export function fromNearby(body, base) {
     address: `여기서 약 ${c.distanceM}m`, title: `${LABELS[base.type] || '위험'} 제보 (이미 ${c.reportCount ?? 1}건)` }];
 }
 
+// GET /api/public-layers → 지도 표시용 공공데이터 (#34). 점수·경로 계산에는 쓰지 않는다
+export const PUBLIC_KIND = { cctv: 'CCTV', schoolZone: 'SCHOOL_ZONE' };
+const FROM_PUBLIC_KIND = invert(PUBLIC_KIND);
+export const PUBLIC_KIND_LABELS = { cctv: '불법주정차 단속 CCTV', schoolZone: '어린이보호구역' };
+export function fromPublicLayers(body) {
+  const items = (body?.features || []).map((f) => ({
+    id: String(f.properties.id),
+    kind: FROM_PUBLIC_KIND[f.properties.kind] || 'cctv',
+    name: f.properties.name || '',
+    source: f.properties.source || '',
+    lat: f.geometry.coordinates[1],
+    lng: f.geometry.coordinates[0],
+  }));
+  return { items, sources: [...new Set(items.map((i) => i.source).filter(Boolean))] };
+}
+
 // POST /api/routes 응답 → 화면 경로 [{id,name,lambda,color,distance,duration,exposure,coordinates:[[lat,lng]]}]
 export function fromRoutes(body) {
   return {

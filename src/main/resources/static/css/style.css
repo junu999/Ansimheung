@@ -24,3 +24,6 @@
 .header-actions{min-width:0}.header-actions .login-button[data-action="account"]{min-width:0}.header-actions .user-nickname{overflow:hidden;text-overflow:ellipsis;max-width:12em}.header-actions .user-avatar,.header-actions [data-action="logout"]{flex-shrink:0}
 @media(max-width:760px){.brand{flex-shrink:0}.header-actions{flex:1;overflow:hidden}.header-actions .icon-button{flex-shrink:0}}
 @media(max-width:380px){.category-filters{margin-right:-18px;padding-right:18px}}
+
+/* 공공데이터 레이어 (#34): 위험 제보 마커보다 작고 옅게, 표시 전용 */
+.map-layer-buttons{display:flex;gap:8px}.public-div-icon{background:none;border:0}.public-map-pin{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid currentColor;box-shadow:0 2px 6px #0000002b}.public-map-pin .icon{width:14px;height:14px}.public-cctv{color:#4b6fa8}.public-schoolZone{color:#c9822b}

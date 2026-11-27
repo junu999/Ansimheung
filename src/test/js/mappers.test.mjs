@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  fromHazardCollection, fromHazardDetail, fromNearby, fromRoutes, fromNotifications,
+  fromHazardCollection, fromHazardDetail, fromNearby, fromRoutes, fromNotifications, fromPublicLayers,
   toReportFields, toSignup, joinDescription, splitDescription, toDisplayScore, TYPE,
 } from '../../main/resources/static/js/mappers.js';
 
@@ -84,4 +84,15 @@ test('제목/설명 왕복', () => {
 test('가입: 명세 필드 이름(ageConfirmed, privacyAgreed)', () => {
   assert.deepEqual(toSignup({ email: 'a@b.c', password: 'pw', nickname: 'n', over14: true, agree: true }),
     { email: 'a@b.c', password: 'pw', nickname: 'n', ageConfirmed: true, privacyAgreed: true });
+});
+
+test('공공데이터 레이어: GeoJSON [경도,위도] → lat/lng, kind → 화면 키, 출처는 중복 없이', () => {
+  const { items, sources } = fromPublicLayers(mock('public-layers.json'));
+  assert.equal(items.length, 2);
+  assert.deepEqual(items[0], { id: '1', kind: 'cctv', name: '정왕1교 식자재마트 앞 (2021.05 변경)',
+    source: '공공데이터포털 경기도_시흥시_불법주정차단속CCTV현황 (2026-09-28)', lat: 37.3392692, lng: 126.7482723 });
+  assert.equal(items[1].kind, 'schoolZone');
+  assert.equal(sources.length, 2);
+  assert.ok(sources.every((s) => /\(\d{4}-\d{2}-\d{2}\)$/.test(s)), '출처에 기준일이 있어야 함');
+  assert.deepEqual(fromPublicLayers({ features: [] }), { items: [], sources: [] });
 });

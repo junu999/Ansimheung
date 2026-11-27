@@ -81,6 +81,9 @@ function navigate(view,{force=false}={}){
   if(view==='routes'&&state.routes.length)drawRoutes(false);
   if(matchMedia('(max-width:760px)').matches&&view!=='map')panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
+// 공공데이터 레이어 (#34): 처음 켤 때 한 번만 불러온다
+let publicLoaded=false;
+async function togglePublicLayers(button){if(!mapUI)return;if(!publicLoaded){button.disabled=true;try{mapUI.renderPublicLayers(await api.publicLayers());publicLoaded=true;}catch(error){toast(error.message,true);return;}finally{button.disabled=false;}}button.setAttribute('aria-pressed',String(mapUI.togglePublicLayers()));}
 function requireLogin(action){if(state.user){action();return;}pendingAfterAuth=action;showAuth();}
 async function refreshReports(bounds=mapUI?.getBounds()){
   clearTimeout(moveTimer);
@@ -216,6 +219,7 @@ document.addEventListener('click',async event=>{
       case 'admin-edit':state.adminSelected=state.adminSelected===id?null:id;render();break;
       case 'admin-hide':{const report=state.adminReports.find(r=>r.id===id);if(!report)break;showConfirm({title:report.hidden?'이 제보를 다시 공개할까요?':'제보를 숨길까요?',message:report.hidden?`“${report.title}”이 시민 지도에 다시 표시돼요.`:`“${report.title}”이 시민 지도와 상세 화면에서 보이지 않게 돼요.`,reason:!report.hidden,confirm:report.hidden?'공개 복원':'비공개로 변경',onConfirm:async reason=>{try{await api.updateReport(id,{hidden:!report.hidden,...(reason?{result:reason}:{})});await refreshReports();await loadAdmin();await loadNotifications();toast(report.hidden?'제보를 다시 공개했어요.':'제보를 비공개 처리했어요.');}catch(error){toast(error.message,true);}}});break;}
       case 'toggle-zones':button.setAttribute('aria-pressed',String(mapUI?.toggleZones() || false));break;
+      case 'toggle-public':await togglePublicLayers(button);break;
       case 'zoom-in':mapUI?.zoomIn();break;
       case 'zoom-out':mapUI?.zoomOut();break;
       case 'school-center':mapUI?.center();break;
