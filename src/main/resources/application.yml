@@ -68,6 +68,7 @@ ansimheung:
   upload:
     dir: uploads                 # git 제외 폴더
     max-long-side-px: 1280       # P-04
+    auto-approve: false          # P-08 승인 전 비공개 (사진 승인 화면은 범위 제외 #28 → 시연 local 만 true)
   paging:
     default-size: 20             # C-14
     max-size: 100

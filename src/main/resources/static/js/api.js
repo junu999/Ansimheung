@@ -5,7 +5,7 @@ import { config } from './config.js';
 import { http, MOCK } from './http.js';
 import {
   STATUS, TYPE, fromHazardCollection, fromHazardDetail, fromNearby, fromRoutes,
-  fromNotifications, toSignup, toReportFields,
+  fromNotifications, fromPublicLayers, toSignup, toReportFields,
 } from './mappers.js';
 
 const school = () => config.school;
@@ -82,8 +82,7 @@ export const api = {
     const form = new FormData();
     for (const [key, value] of Object.entries(toReportFields(payload))) form.append(key, value);
     if (payload.photoFile) form.append('photo', payload.photoFile);
-    const created = await http.post('/api/reports', form);
-    return this.getReport(created.hazardId);
+    return http.post('/api/reports', form);
   },
 
   // ---------- 공감 (#26) ----------
@@ -94,6 +93,11 @@ export const api = {
     const report = await this.getReport(id);
     if (MOCK && body) Object.assign(report, { likes: body.empathyCount, liked: body.myEmpathy });
     return remember(report);
+  },
+
+  // ---------- 공공데이터 레이어 (#34, 표시 전용) ----------
+  async publicLayers() {
+    return fromPublicLayers(await http.get('/api/public-layers'));
   },
 
   // ---------- 경로 (#13) ----------

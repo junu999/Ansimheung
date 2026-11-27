@@ -49,25 +49,58 @@ const MOCK_ROUTES = [
   ['GET', /^\/api\/admin\/hazards\/\d+$/, 'admin-hazard-detail.json'],
   ['PATCH', /^\/api\/admin\/.+$/, null],
 ];
+// 제보 체험 결과는 현재 페이지의 메모리에만 둔다. 새로고침하면 초기화된다.
+const mockHazards = new Map();
+let mockId = Date.now();
 
 function csrfToken() {
   const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-async function mockRequest(method, url) {
+async function mockRequest(method, url, body) {
   const path = url.split('?')[0];
   const route = MOCK_ROUTES.find(([m, pattern]) => m === method && pattern.test(path));
   if (!route) return undefined; // 가짜 데이터 없음 → 진짜 서버로
   await new Promise((resolve) => setTimeout(resolve, 200)); // 로딩 화면 확인용 지연
   if (route[2] === null) return null;
+  if (method === 'GET' && /^\/api\/hazards\/\d+$/.test(path)) {
+    const saved = mockHazards.get(Number(path.split('/').at(-1)));
+    if (saved) return saved;
+  }
   const res = await fetch(`/mock/${route[2]}`);
-  return res.json();
+  const data = await res.json();
+  if (method === 'POST' && path === '/api/reports' && body.get('mergeHazardId')) {   // 묶기(#25): 기존 지점에 더함
+    const hazardId = Number(body.get('mergeHazardId')), saved = mockHazards.get(hazardId);
+    if (saved) saved.reportCount += 1;
+    return { ...data, reportId: ++mockId, hazardId, merged: true };
+  }
+  if (method === 'POST' && path === '/api/reports') {
+    const template = await (await fetch('/mock/hazard-detail.json')).json();
+    const reportId = ++mockId, hazardId = ++mockId;
+    const createdAt = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('Z', '+09:00');
+    mockHazards.set(hazardId, {
+      ...template, id: hazardId, lat: Number(body.get('lat')), lng: Number(body.get('lng')),
+      type: body.get('type'), timeSlot: body.get('timeSlot'), status: 'RECEIVED',
+      empathyCount: 0, reportCount: 1, myEmpathy: false, myReported: true,
+      reports: [{ id: reportId, description: body.get('description') || null, createdAt }],
+      photos: [], history: [{ fromStatus: null, toStatus: 'RECEIVED', memo: null, createdAt }],
+      createdAt, lastActivityAt: createdAt,
+    });
+    return { ...data, reportId, hazardId, merged: false };
+  }
+  if (method === 'GET' && path === '/api/hazards') {
+    return { ...data, features: [...data.features, ...[...mockHazards.values()].map(h => ({
+      type: 'Feature', geometry: { type: 'Point', coordinates: [h.lng, h.lat] },
+      properties: { id: h.id, type: h.type, timeSlot: h.timeSlot, status: h.status, score: h.score, level: h.level, empathyCount: h.empathyCount, reportCount: h.reportCount, createdAt: h.createdAt },
+    }))] };
+  }
+  return data;
 }
 
 async function request(method, url, body) {
   if (MOCK) {
-    const mocked = await mockRequest(method, url);
+    const mocked = await mockRequest(method, url, body);
     if (mocked !== undefined) return mocked;
   }
 

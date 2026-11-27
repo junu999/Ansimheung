@@ -13,7 +13,7 @@ const node = key => {
 };
 const layer = () => ({ addTo() { return this; }, bindTooltip() { return this; }, on() {}, clearLayers() {}, openTooltip() {} });
 const bounds = { pad() { return this; }, getWest: () => 126.737, getSouth: () => 37.336, getEast: () => 126.749, getNorth: () => 37.345 };
-const map = { setView() { return this; }, on: (name, fn) => mapEvents.set(name, fn), getBounds: () => bounds, flyTo() {}, removeLayer() {}, fitBounds() {} };
+const map = { setView() { return this; }, on: (name, fn) => mapEvents.set(name, fn), getBounds: () => bounds, flyTo() {}, removeLayer() {}, fitBounds() {}, invalidateSize() {} };
 globalThis.document = { cookie: '', activeElement: null, querySelector: node, querySelectorAll: () => [], getElementById: node, addEventListener: (name, fn) => events.set(name, fn) };
 globalThis.window = { addEventListener() {}, L: { map: () => map, tileLayer: layer, circle: layer, marker: layer, layerGroup: layer, divIcon: o => o, latLng: () => ({ toBounds: () => bounds }), latLngBounds: p => p, polyline: (coordinates, options) => { lines.push({ coordinates, ...options }); return layer(); } } };
 globalThis.location = { search: '', hash: '' };
@@ -24,6 +24,7 @@ globalThis.fetch = async (url, options) => {
   if (url === '/api/config') return Response.json(mock('config'));
   if (url === '/api/me') return Response.json({ message: '로그인이 필요해요' }, { status: 401 });
   if (url.startsWith('/api/hazards?')) { listRequests++; return Response.json(mock('hazards')); }
+  if (/^\/api\/hazards\/\d+$/.test(url)) return Response.json(mock('hazard-detail'));
   requests.push({ url, ...options });
   return new Promise(resolve => pending.push(resolve));
 };
@@ -100,4 +101,12 @@ test('출발지 변경 또는 화면 이탈 뒤에 도착한 응답은 결과를
   assert.ok(!html().includes('이전 요청 오류') && !html().includes('class="route-card '));
   const incomplete = click('calculate-routes'); respond({ routes: [] }); await incomplete;
   assert.match(html(), /세 가지 경로를 모두 받지 못했어요/);
+});
+
+test('경로 조회 중 마커 상세를 열면 늦은 오류가 복귀한 경로 화면에 남지 않는다', async () => {
+  const running=click('calculate-routes');await click('open-report','12');
+  assert.match(html(),/detail-title/);
+  respond({message:'이전 경로 요청 오류'},500);await running;
+  await click('nav-routes');
+  assert.ok(!html().includes('이전 경로 요청 오류'));
 });

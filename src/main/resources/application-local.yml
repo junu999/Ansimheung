@@ -18,3 +18,5 @@ ansimheung:
     enabled: true
     admin-password: ansim1234
     parent-password: ansim1234
+  upload:
+    auto-approve: true           # 시연: 올린 사진이 바로 상세에 보이게 (#24)

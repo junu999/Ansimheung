@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  fromHazardCollection, fromHazardDetail, fromNearby, fromRoutes, groupRoutes, fromNotifications,
+  fromHazardCollection, fromHazardDetail, fromNearby, fromRoutes, groupRoutes, fromNotifications, fromPublicLayers,
   toReportFields, toSignup, joinDescription, splitDescription, toDisplayScore, TYPE,
 } from '../../main/resources/static/js/mappers.js';
 
@@ -35,6 +35,12 @@ test('상세: 첫 제보 설명을 제목/설명으로 나누고 이력·공감 
   assert.equal(r.photoStatus, 'none');
 });
 
+test('시드 형식의 상세: 첫 줄은 제목, 다음 줄은 설명으로 유지한다', () => {
+  const r = fromHazardDetail({ ...mock('hazard-detail.json'), reports: [{ description: '골목 입구 불법주차\n골목으로 들어가는 입구 양쪽에 차가 늘 서 있어서 아이들이 차 사이로 나와요' }] }, school);
+  assert.equal(r.title, '골목 입구 불법주차');
+  assert.equal(r.description, '골목으로 들어가는 입구 양쪽에 차가 늘 서 있어서 아이들이 차 사이로 나와요');
+});
+
 test('관리자 상세: allowedNextStatuses → 화면 상태 키, 작성자 닉네임', () => {
   const r = fromHazardDetail(mock('admin-hazard-detail.json'), school);
   assert.deepEqual(r.allowedNext, ['reviewing', 'rejected']);
@@ -45,6 +51,26 @@ test('사진: /api/photos/{id}, 미승인은 pending', () => {
   const r = fromHazardDetail({ ...mock('hazard-detail.json'), photos: [{ id: 9, approved: false }] }, school);
   assert.equal(r.photo, '/api/photos/9');
   assert.equal(r.photoStatus, 'pending');
+});
+
+test('상세: 승인 사진과 여러 처리 이력의 상태·메모·시간을 유지한다', () => {
+  const history = [
+    { toStatus: 'RECEIVED', memo: null, createdAt: '2026-11-01T08:00:00+09:00' },
+    { toStatus: 'CHECKING', memo: '현장 확인 중', createdAt: '2026-11-02T09:00:00+09:00' },
+    { toStatus: 'RESOLVED', memo: '보도 정비 완료', createdAt: '2026-11-03T10:00:00+09:00' },
+  ];
+  const r = fromHazardDetail({ ...mock('hazard-detail.json'), photos: [{ id: 35, approved: true }], history }, school);
+  assert.equal(r.photo, '/api/photos/35');
+  assert.equal(r.photoStatus, 'approved');
+  assert.deepEqual(r.history, history.map((h, i) => ({ status: ['pending', 'reviewing', 'resolved'][i], result: h.memo || '', at: h.createdAt })));
+  assert.equal(r.result, '보도 정비 완료');
+});
+
+test('상세: 빈 사진·이력도 화면에서 빈 목록으로 다룬다', () => {
+  const r = fromHazardDetail({ ...mock('hazard-detail.json'), photos: [], history: [] }, school);
+  assert.equal(r.photo, null);
+  assert.deepEqual(r.history, []);
+  assert.equal(r.result, '');
 });
 
 test('묶기 후보: candidate 있으면 1개, null 이면 빈 배열', () => {
@@ -94,6 +120,14 @@ test('제보 등록 필드: 명세(lat,lng,type,timeSlot,description) 이름과 
   assert.ok(f.description.startsWith('제목\n'));
 });
 
+test('제보 화면: 제목 40자와 설명 150자를 줄바꿈으로 합쳐 API에 보낸다', () => {
+  const payload = { lat: 1, lng: 2, category: 'parking', timeBand: 'all', title: '제목'.repeat(20), description: '가'.repeat(150) };
+  const fields = toReportFields(payload);
+  assert.equal(fields.description, `${payload.title}\n${payload.description}`);
+  assert.equal(fields.description.length, 191);
+  assert.deepEqual(Object.keys(fields).sort(), ['description', 'lat', 'lng', 'timeSlot', 'type']);
+});
+
 test('제목/설명 왕복', () => {
   assert.deepEqual(splitDescription(joinDescription('횡단보도 앞', '차가 서 있어요')), { title: '횡단보도 앞', description: '차가 서 있어요' });
 });
@@ -101,4 +135,15 @@ test('제목/설명 왕복', () => {
 test('가입: 명세 필드 이름(ageConfirmed, privacyAgreed)', () => {
   assert.deepEqual(toSignup({ email: 'a@b.c', password: 'pw', nickname: 'n', over14: true, agree: true }),
     { email: 'a@b.c', password: 'pw', nickname: 'n', ageConfirmed: true, privacyAgreed: true });
+});
+
+test('공공데이터 레이어: GeoJSON [경도,위도] → lat/lng, kind → 화면 키, 출처는 중복 없이', () => {
+  const { items, sources } = fromPublicLayers(mock('public-layers.json'));
+  assert.equal(items.length, 2);
+  assert.deepEqual(items[0], { id: '1', kind: 'cctv', name: '정왕1교 식자재마트 앞 (2021.05 변경)',
+    source: '공공데이터포털 경기도_시흥시_불법주정차단속CCTV현황 (2026-09-28)', lat: 37.3392692, lng: 126.7482723 });
+  assert.equal(items[1].kind, 'schoolZone');
+  assert.equal(sources.length, 2);
+  assert.ok(sources.every((s) => /\(\d{4}-\d{2}-\d{2}\)$/.test(s)), '출처에 기준일이 있어야 함');
+  assert.deepEqual(fromPublicLayers({ features: [] }), { items: [], sources: [] });
 });
