@@ -1,13 +1,15 @@
 import { config } from './config.js';
 import { categories, riskNames } from './labels.js';
 import { icon, escapeHtml, riskLevel } from './utils.js';
+import { PUBLIC_KIND_LABELS } from './mappers.js';
 
-export function createMap({onReportClick,onSelect,onTileError,onTileReady}) {
+export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMoveEnd,onReportPositionChange}) {
   if(!window.L) throw new Error('지도 구성요소를 불러오지 못했어요. 페이지를 새로고침해 주세요.');
   const L=window.L;
   const {lat:sLat,lng:sLng}=config.school;
-  // 시범 지역(반경 500m)보다 조금 넓게 이동 범위를 제한
-  const map=L.map('map',{zoomControl:false,minZoom:15,maxZoom:19,scrollWheelZoom:true,maxBounds:[[sLat-.009,sLng-.011],[sLat+.009,sLng+.011]],maxBoundsViscosity:.8}).setView([sLat,sLng],17);
+  const pilotBounds=L.latLng(sLat,sLng).toBounds(config.school.radius*2);
+  const map=L.map('map',{zoomControl:false,minZoom:15,maxZoom:19,scrollWheelZoom:true,maxBounds:pilotBounds.pad(1),maxBoundsViscosity:.8}).setView([sLat,sLng],17);
+  const getBounds=()=>{const bounds=map.getBounds();return {west:bounds.getWest(),south:bounds.getSouth(),east:bounds.getEast(),north:bounds.getNorth()};};
   const attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
   let loaded=0, failed=0, selectionMode=null, selectedMarker=null, originMarker=null, zonesVisible=false;
   const tiles=L.tileLayer(config.basemap.tileUrl,{maxZoom:19,attribution}).addTo(map);
@@ -18,8 +20,12 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady}) {
   const school=L.marker([config.school.lat,config.school.lng],{icon:schoolIcon,zIndexOffset:600,title:config.school.name}).addTo(map);
   school.bindTooltip(escapeHtml(`${config.school.name} · ${config.school.address || ''}`),{direction:'bottom',offset:[0,40]});
   let reportLayer=L.layerGroup().addTo(map), zoneLayer=L.layerGroup(), routeLayer=L.layerGroup().addTo(map);
+  const publicLayer=L.layerGroup();let publicVisible=false, publicSources=[];
   const markers=new Map();
-  map.on('click',event=>{if(selectionMode)onSelect({lat:event.latlng.lat,lng:event.latlng.lng},selectionMode);});
+  map.on('click',event=>{if(selectionMode==='report')map.panTo(event.latlng);else if(selectionMode)onSelect({lat:event.latlng.lat,lng:event.latlng.lng},selectionMode);});
+  const reportPosition=()=>{if(selectionMode==='report'){const center=map.getCenter();onReportPositionChange?.({lat:center.lat,lng:center.lng});}};
+  map.on('movestart',()=>{if(selectionMode==='report')onReportPositionChange?.(null);});
+  map.on('moveend',()=>{reportPosition();if(!selectionMode)onMoveEnd?.(getBounds());});
   map.on('zoomend',()=>document.querySelector('.map-section').classList.toggle('map-zoomed-out',map.getZoom()<15));
   const setSelected=(pos,type='report')=>{
     if(selectedMarker)map.removeLayer(selectedMarker);
@@ -31,7 +37,7 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady}) {
       reportLayer.clearLayers();zoneLayer.clearLayers();markers.clear();
       reports.forEach(report=>{
         const level=riskLevel(report), category=categories[report.category] || categories.sidewalk;
-        const marker=L.marker([report.lat,report.lng],{icon:L.divIcon({className:`report-div-icon ${report.id===selectedId?'is-selected':''}`,html:`<span class="report-map-pin risk-${level}">${icon(report.status==='resolved'?'check':category.icon)}</span>`,iconSize:[38,44],iconAnchor:[19,38]}),title:`${report.title} · ${riskNames[level]}`,alt:report.title,riseOnHover:true});
+        const marker=L.marker([report.lat,report.lng],{icon:L.divIcon({className:`report-div-icon ${report.id===selectedId?'is-selected':''}`,html:`<span class="report-map-pin risk-${level}">${icon(report.status==='resolved'?'check':category.icon)}</span>`,iconSize:[38,44],iconAnchor:[19,38]}),title:`${report.title} · ${riskNames[level]}`,alt:report.title,riseOnHover:true,zIndexOffset:report.id===selectedId?700:0});
         marker.bindTooltip(`${escapeHtml(report.title)} <span class="tooltip-risk">${riskNames[level]}</span>`,{direction:'top',offset:[0,-36]});
         marker.on('click',()=>{if(!selectionMode)onReportClick(report.id);});
         marker.addTo(reportLayer);markers.set(report.id,marker);
@@ -39,13 +45,29 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady}) {
       });
     },
     focusReport(report) { map.flyTo([report.lat,report.lng],18,{duration:.6}); markers.get(report.id)?.openTooltip(); },
-    center() { map.flyTo([config.school.lat-.00015,config.school.lng-.0004],17,{duration:.6}); },
-    select(mode,pos) {selectionMode=mode;document.getElementById('map').classList.toggle('is-selecting',Boolean(mode));setSelected(pos,mode);},
+    center() { map.flyTo([sLat,sLng],17,{duration:.6}); },
+    getBounds,
+    select(mode,pos) {selectionMode=mode;document.getElementById('map').classList.toggle('is-selecting',Boolean(mode));setSelected(mode==='report'?null:pos,mode);if(mode==='report'&&pos)map.panTo([pos.lat,pos.lng],{animate:false});reportPosition();},
     selectionPoint: setSelected,
     flyTo(pos) {map.flyTo([pos.lat,pos.lng],17,{duration:.5});},
     zoomIn:()=>map.zoomIn(), zoomOut:()=>map.zoomOut(),
     retryTiles() {loaded=0;failed=0;tiles.redraw();},
     toggleZones() {zonesVisible=!zonesVisible;if(zonesVisible)zoneLayer.addTo(map);else map.removeLayer(zoneLayer);return zonesVisible;},
+    // 공공데이터 (#34): 표시 전용. 켜면 출처·기준일을 지도 출처 표기란에 함께 보여준다 (공공누리 출처 표기)
+    renderPublicLayers({items,sources}) {
+      publicLayer.clearLayers();publicSources=sources.map(s=>escapeHtml(s));
+      items.forEach(item=>{
+        const label=PUBLIC_KIND_LABELS[item.kind];
+        L.marker([item.lat,item.lng],{icon:L.divIcon({className:'public-div-icon',html:`<span class="public-map-pin public-${item.kind}">${icon(item.kind==='cctv'?'camera':'school')}</span>`,iconSize:[26,26],iconAnchor:[13,13]}),title:`${label} · ${item.name}`,keyboard:false})
+          .bindTooltip(`<strong>${escapeHtml(label)}</strong><br>${escapeHtml(item.name)}`,{direction:'top',offset:[0,-12]}).addTo(publicLayer);
+      });
+    },
+    togglePublicLayers() {
+      publicVisible=!publicVisible;
+      if(publicVisible){publicLayer.addTo(map);publicSources.forEach(s=>map.attributionControl.addAttribution(s));}
+      else{map.removeLayer(publicLayer);publicSources.forEach(s=>map.attributionControl.removeAttribution(s));}
+      return publicVisible;
+    },
     clearRoutes() {routeLayer.clearLayers();if(originMarker)map.removeLayer(originMarker);originMarker=null;},
     routes(routes,selectedId,origin,{fit=true}={}) {
       routeLayer.clearLayers();

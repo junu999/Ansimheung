@@ -1,4 +1,4 @@
-// DOM 출력과 이벤트를 최소한으로 연결해 실제 app.js와 api.js의 상세 흐름을 검사한다.
+// 최소 DOM·Leaflet 이벤트로 실제 app.js·api.js·map.js의 상세/지도 요청 순서를 검사한다.
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -6,22 +6,25 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const mock = name => JSON.parse(readFileSync(new URL(`../../main/resources/static/mock/${name}`, import.meta.url)));
 const saved = Object.fromEntries(['document', 'window', 'location', 'history', 'matchMedia', 'fetch', 'setTimeout'].map(key => [key, globalThis[key]]));
-const nodes = new Map(), events = new Map(), pending = new Map(), timers = [];
+const nodes = new Map(), events = new Map(), mapEvents = new Map(), pending = new Map(), timers = [], listUrls = [];
 let holdList = false, resolveList;
 const node = key => {
   if (!nodes.has(key)) nodes.set(key, { innerHTML: '', hidden: false, classList: { toggle() {} }, setAttribute() {}, contains: () => false, querySelector: () => null });
   return nodes.get(key);
 };
-globalThis.document = { cookie: '', activeElement: null, querySelector: node, querySelectorAll: () => [], addEventListener: (name, handler) => events.set(name, handler) };
-globalThis.window = { addEventListener() {} };
-globalThis.location = { search: '', hash: '' };
+const layer = () => ({ addTo() { return this; }, on() { return this; }, bindTooltip() { return this; }, openTooltip() {}, clearLayers() {} });
+const bounds = { pad() { return this; }, getWest: () => 126.741, getSouth: () => 37.339, getEast: () => 126.745, getNorth: () => 37.343 };
+const map = { setView() { return this; }, on: (name, fn) => mapEvents.set(name, fn), getBounds: () => bounds, flyTo() {}, removeLayer() {}, invalidateSize() {} };
+globalThis.document = { cookie: '', activeElement: null, querySelector: node, querySelectorAll: () => [], getElementById: node, addEventListener: (name, handler) => events.set(name, handler) };
+globalThis.window = { addEventListener() {}, L: { map: () => map, tileLayer: layer, circle: layer, marker: layer, layerGroup: layer, divIcon: value => value, latLng: () => ({ toBounds: () => bounds }) } };
+globalThis.location = { search: '', hash: '', origin: 'http://ansimheung.test' };
 globalThis.history = { replaceState() {} };
 globalThis.matchMedia = () => ({ matches: false });
 globalThis.setTimeout = (...args) => { const timer = saved.setTimeout(...args); timers.push(timer); return timer; };
 globalThis.fetch = async url => {
   if (url === '/api/config') return Response.json(mock('config.json'));
   if (url === '/api/me') return Response.json({ message: '로그인이 필요해요.' }, { status: 401 });
-  if (url.startsWith('/api/hazards?')) return holdList ? new Promise(resolve => { resolveList = resolve; }) : Response.json(mock('hazards.json'));
+  if (url.startsWith('/api/hazards?')) { listUrls.push(url); return holdList ? new Promise(resolve => { resolveList = resolve; }) : Response.json(mock('hazards.json')); }
   return new Promise(resolve => pending.set(url.split('/').at(-1), resolve));
 };
 await import('../../main/resources/static/js/app.js');
@@ -33,6 +36,12 @@ after(() => {
 const click = (action, id) => events.get('click')({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id } } : null } });
 const respond = (id, data, status = 200) => { assert.ok(pending.has(id)); pending.get(id)(Response.json(data, { status })); pending.delete(id); };
 const detail = (id, title) => ({ ...mock('hazard-detail.json'), id, reports: [{ description: `${title}\n상세 설명`, authorNickname: '노출하면 안 되는 작성자' }] });
+
+test('지도 이동 후 목록 요청은 현재 화면 bbox를 유지한다', async () => {
+  const before = listUrls.length; mapEvents.get('moveend')(); await delay(350);
+  assert.equal(listUrls.length, before + 1);
+  assert.equal(new URL(listUrls.at(-1), location.origin).searchParams.get('bbox'), '126.741000,37.339000,126.745000,37.343000');
+});
 
 test('상세에 사진·이력·위험도·안전신문고를 표시하고 작성자는 노출하지 않는다', async () => {
   const loading = click('open-report', '12');
@@ -48,6 +57,14 @@ test('상세에 사진·이력·위험도·안전신문고를 표시하고 작�
   assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.ok(!html.includes('노출하면 안 되는 작성자'));
   assert.match(html, /href="https:\/\/www\.safetyreport\.go\.kr\/" target="_blank" rel="noopener noreferrer"/);
+});
+
+test('상세 화면 갱신은 목록 대신 같은 상세를 다시 조회한다', async () => {
+  const before = listUrls.length, refresh = click('retry-reports');
+  respond('12', detail(12, '갱신한 상세')); await refresh;
+  assert.equal(listUrls.length, before);
+  assert.match(node('#panel').innerHTML, /갱신한 상세/);
+  assert.match(node('#panel').innerHTML, /처리 이력/);
 });
 
 test('404는 이전 상세와 사진을 지우고 삭제 안내를 표시한다', async () => {

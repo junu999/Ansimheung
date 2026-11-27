@@ -1,0 +1,86 @@
+### 제보 등록 (#11) — VS Code REST Client 확장으로 "Send Request" 클릭
+### 먼저 http/auth.http 로 로그인하고, 같은 XSRF-TOKEN 쿠키값을 아래 @xsrf 에 붙여 넣기
+### 응답 201 {reportId, hazardId, merged}. 사진(#24)은 아직 무시
+
+@xsrf = 여기에_XSRF-TOKEN_쿠키값
+
+### 새 지점 제보 (정왕초 후문 근처)
+POST http://localhost:8080/api/reports
+X-XSRF-TOKEN: {{xsrf}}
+Content-Type: multipart/form-data; boundary=ansim
+
+--ansim
+Content-Disposition: form-data; name="lat"
+
+37.3413
+--ansim
+Content-Disposition: form-data; name="lng"
+
+126.7436
+--ansim
+Content-Disposition: form-data; name="type"
+
+ILLEGAL_PARKING
+--ansim
+Content-Disposition: form-data; name="timeSlot"
+
+MORNING
+--ansim
+Content-Disposition: form-data; name="description"
+
+후문 앞 불법주정차
+차 사이로 아이들이 안 보여요
+--ansim--
+
+### 시범 지역 밖 → 400 OUT_OF_AREA
+POST http://localhost:8080/api/reports
+X-XSRF-TOKEN: {{xsrf}}
+Content-Type: multipart/form-data; boundary=ansim
+
+--ansim
+Content-Disposition: form-data; name="lat"
+
+37.3500
+--ansim
+Content-Disposition: form-data; name="lng"
+
+126.7436
+--ansim
+Content-Disposition: form-data; name="type"
+
+ILLEGAL_PARKING
+--ansim
+Content-Disposition: form-data; name="timeSlot"
+
+MORNING
+--ansim--
+
+### 묶기 후보 (#25) — 20m 안 같은 유형 접수/확인중 지점, 없으면 {"candidate": null}
+GET http://localhost:8080/api/hazards/nearby?lat=37.3414&lng=126.7436&type=ILLEGAL_PARKING
+
+### 후보 지점에 내 제보 더하기 → 201 merged:true (mergeHazardId 는 위 응답의 candidate.id)
+POST http://localhost:8080/api/reports
+X-XSRF-TOKEN: {{xsrf}}
+Content-Type: multipart/form-data; boundary=ansim
+
+--ansim
+Content-Disposition: form-data; name="lat"
+
+37.3414
+--ansim
+Content-Disposition: form-data; name="lng"
+
+126.7436
+--ansim
+Content-Disposition: form-data; name="type"
+
+ILLEGAL_PARKING
+--ansim
+Content-Disposition: form-data; name="timeSlot"
+
+MORNING
+--ansim
+Content-Disposition: form-data; name="mergeHazardId"
+
+여기에_candidate.id
+--ansim--

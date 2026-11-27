@@ -62,7 +62,8 @@ public record AnsimheungProperties(
     }
 
     /** P-04 (파일 크기 5MB 는 spring.servlet.multipart) */
-    public record Upload(String dir, int maxLongSidePx) {
+    /** autoApprove: 올린 사진을 바로 공개 (P-08 기본은 false = 관리자 승인 전 비공개, 시연 local 만 true) */
+    public record Upload(String dir, int maxLongSidePx, boolean autoApprove) {
     }
 
     /** C-14 */
