@@ -11,10 +11,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
-/** 제보 등록·묶기 후보 조회는 회원만 (SecurityConfig). 등록 요청은 multipart: lat, lng, type, timeSlot, description?, mergeHazardId? */
+/** 제보 등록·묶기 후보 조회는 회원만 (SecurityConfig). 등록 요청은 multipart: lat, lng, type, timeSlot, description?, photo?, mergeHazardId? */
 @RestController
 public class ReportController {
 
@@ -33,7 +35,8 @@ public class ReportController {
     @PostMapping("/api/reports")
     @ResponseStatus(HttpStatus.CREATED)
     public ReportCreated create(@Valid @ModelAttribute ReportCreateRequest request,
+                                @RequestParam(required = false) MultipartFile photo,
                                 @AuthenticationPrincipal LoginUser user) {
-        return reportService.create(user.id(), request);
+        return reportService.create(user.id(), request, photo);
     }
 }
