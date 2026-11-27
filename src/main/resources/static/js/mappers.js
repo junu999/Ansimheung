@@ -129,6 +129,19 @@ export function fromRoutes(body) {
   };
 }
 
+// 같은 LineString은 카드 하나로 묶되 최단·균형·안전 전환은 각각 유지한다.
+export function groupRoutes(routes) {
+  const groups = new Map();
+  for (const route of routes) {
+    const key = JSON.stringify(route.coordinates);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(route);
+  }
+  return [...groups.values()].map(members => ({ ...members[0],
+    ids: members.map(route => route.id), name: members.map(route => route.name).join('·'),
+  }));
+}
+
 // GET /api/me/notifications → Notification[]
 export function fromNotifications(body) {
   return (body?.items || []).map((n) => ({

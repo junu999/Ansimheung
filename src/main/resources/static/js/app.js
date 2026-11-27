@@ -1,12 +1,13 @@
 import { config } from './config.js';
 import { api } from './api.js';
+import { groupRoutes } from './mappers.js';
 import { createMap } from './map.js';
 import { categories, timeBands, statuses, adminStatuses, riskNames, starts } from './labels.js';
 import { $, icon, escapeHtml as esc, distance, relativeTime, formatDate, formatDistance, riskLevel, coordinateText, safePhoto, resizePhoto } from './utils.js';
 
 const freshDraft=()=>({title:'',description:'',category:'parking',timeBand:'morning',position:null,photo:null,photoFile:null});
 const state={view:'map',user:null,reports:[],loading:true,error:'',category:'all',time:'any',sort:'latest',resolved:true,selectedId:null,returnToReport:false,draft:freshDraft(),draftDirty:false,duplicates:[],reportError:'',submitting:false,origin:api.isDemo?{...starts[0]}:null,routes:[],routeSelection:'safest',routeLoading:false,routeError:'',notifications:[],notificationsLoading:false,notificationError:'',adminReports:[],adminFilter:'all',adminSelected:null,adminLoading:false,adminError:'',selectionMode:null};
-let mapUI, pendingAfterAuth=null, previousFocus=null, toastTimer, duplicateRequest=0, modalKind=null, lastRenderedView=null;
+let mapUI, pendingAfterAuth=null, previousFocus=null, toastTimer, duplicateRequest=0, modalKind=null, lastRenderedView=null, routeRequest=0;
 const panel=$('#panel');
 const categoryOf=report=>categories[report.category] || categories.sidewalk;
 const categoryOptions=selected=>Object.entries(categories).map(([key,c])=>`<option value="${key}" ${selected===key?'selected':''}>${c.label}</option>`).join('');
@@ -28,11 +29,12 @@ function detailPanel(){const r=state.reports.find(r=>r.id===state.selectedId);if
 
 function routesPanel(){
   const selected=state.routes.find(r=>r.id===state.routeSelection),shortest=state.routes.find(r=>r.id==='shortest'),comparison=state.routeSelection==='shortest'?state.routes.find(r=>r.id==='safest'):selected;
-  const reduction=shortest?.exposure>0&&comparison?Math.round((shortest.exposure-comparison.exposure)/shortest.exposure*100):0;
+  const groups=groupRoutes(state.routes),allSame=groups.length===1;
+  const reduction=shortest?.rawExposure>0&&comparison?Math.round((shortest.rawExposure-comparison.rawExposure)/shortest.rawExposure*100):0;
   const extra=comparison&&shortest?Math.round(comparison.distance-shortest.distance):0;
   const same=shortest&&comparison&&JSON.stringify(shortest.coordinates)===JSON.stringify(comparison.coordinates);
-  const routeCard=(route,active)=>`<div class="route-card ${active?'selected':''}"><div class="route-card-title">${esc(route.name)} 경로${active&&route.id==='safest'?'<span class="recommend-tag">안전 우선</span>':''}</div><div class="route-duration">${Number(route.duration)||0}<small>분</small></div><div class="route-distance">${formatDistance(route.distance)}</div><div class="route-risk"><span>위험노출</span><strong>${Number(route.exposure)||0}<small> 점</small></strong></div></div>`;
-  return `<div class="panel-scroll">${panelTop('위험지도로 돌아가기')}<div class="intro route-intro"><div class="eyebrow">OUR WAY TO SCHOOL</div><h1>조금 돌아가도,<br><span>더 안심되는 길.</span></h1><p>거리와 위험노출을 함께 비교해 보세요.</p></div><div class="journey-fields"><button class="journey-field" data-action="select-route-origin"><span class="journey-dot"></span><span><small>출발</small><strong>${esc(state.origin?.name || (state.origin?'지도에서 선택한 위치':'지도에서 출발지를 선택하세요'))}</strong></span>${icon('target')}</button><div class="journey-field"><span class="journey-dot destination"></span><span><small>도착</small><strong>${esc(config.school.name)}</strong></span>${icon('school')}</div></div>${api.isDemo?`<div class="sample-starts"><p>먼저 예시 출발지로 체험해 보세요.</p><div>${starts.map(s=>`<button class="sample-start ${state.origin?.id===s.id?'active':''}" data-action="sample-start" data-id="${s.id}">${s.name}</button>`).join('')}</div></div>`:''}<button class="button primary full calculate-button" data-action="calculate-routes" ${state.routeLoading?'disabled':''}>${state.routeLoading?'<span class="spinner"></span>경로를 비교하고 있어요':`${icon('route')}통학경로 비교하기`}</button>${errorBox(state.routeError)}${state.routes.length?`<h2 class="route-heading">나에게 맞는 통학길</h2><div class="route-tabs" role="group" aria-label="안전 가중치 선택">${state.routes.map(r=>`<button class="route-tab ${state.routeSelection===r.id?'active':''}" data-action="route-select" data-id="${esc(r.id)}" aria-pressed="${state.routeSelection===r.id}">${esc(r.name)}</button>`).join('')}</div><div class="route-comparison">${routeCard(shortest,state.routeSelection==='shortest')}${comparison?routeCard(comparison,state.routeSelection!=='shortest'):''}</div><div class="route-insight">${icon('shield')}<div><strong>${same?'현재 조건에서는 같은 경로가 선택되었어요.':reduction>0?`최단 경로보다<br>위험노출 ${reduction}% 감소`:'선택한 경로의 거리와 위험노출을 비교해 보세요.'}</strong><p>${same?'최단·안전 경로의 좌표가 같아요.':`${extra>=0?`${formatDistance(extra)} 더 걷고`:`${formatDistance(Math.abs(extra))} 덜 걷고`}, 위험노출 ${shortest.exposure}점 → ${comparison.exposure}점<br>${api.isDemo?'예시 점수로 비교한 체험 결과예요.':'제보를 바탕으로 비교한 결과예요.'}`}</p></div></div><p class="route-disclaimer">${api.isDemo?'화면 체험용 예시 경로예요. 실제 보도망을 계산한 경로가 아니며, 실제 보행 안내에 사용하지 마세요.':'제보 기반 비교 결과이며 실제 현장 상황은 다를 수 있어요.'}<br>위험노출은 사고확률이 아니에요.</p>`:`<div class="route-empty">${icon('route')}<h3>통학길에 안심을 한 겹 더</h3><p>출발지를 선택하면 최단·균형·안전 경로의<br>거리, 시간, 위험노출을 비교할 수 있어요.</p></div>`}</div><div class="panel-footer"><button class="button secondary full" data-action="select-route-origin">${icon('pin')}지도에서 출발지 선택</button></div>`;
+  const routeCard=route=>`<div class="route-card ${route.ids.includes(state.routeSelection)?'selected':''}"><div class="route-card-title">${esc(route.name)} 경로</div><div class="route-duration">${Number(route.duration)||0}<small>분</small></div><div class="route-distance">${formatDistance(route.distance)}</div><div class="route-risk"><span>위험노출</span><strong>${Number(route.exposure)||0}<small> 점</small></strong></div></div>`;
+  return `<div class="panel-scroll">${panelTop('위험지도로 돌아가기')}<div class="intro route-intro"><div class="eyebrow">OUR WAY TO SCHOOL</div><h1>조금 돌아가도,<br><span>더 안심되는 길.</span></h1><p>거리와 위험노출을 함께 비교해 보세요.</p></div><div class="journey-fields"><button class="journey-field" data-action="select-route-origin"><span class="journey-dot"></span><span><small>출발</small><strong>${esc(state.origin?.name || (state.origin?'지도에서 선택한 위치':'지도에서 출발지를 선택하세요'))}</strong></span>${icon('target')}</button><div class="journey-field"><span class="journey-dot destination"></span><span><small>도착</small><strong>${esc(config.school.name)}</strong></span>${icon('school')}</div></div>${api.isDemo?`<div class="sample-starts"><p>먼저 예시 출발지로 체험해 보세요.</p><div>${starts.map(s=>`<button class="sample-start ${state.origin?.id===s.id?'active':''}" data-action="sample-start" data-id="${s.id}">${s.name}</button>`).join('')}</div></div>`:''}<button class="button primary full calculate-button" data-action="calculate-routes" ${state.routeLoading?'disabled':''}>${state.routeLoading?'<span class="spinner"></span>경로를 비교하고 있어요':`${icon('route')}통학경로 비교하기`}</button>${errorBox(state.routeError,'calculate-routes')}${state.routes.length?`<h2 class="route-heading">나에게 맞는 통학길</h2><div class="route-tabs" role="group" aria-label="안전 가중치 선택">${state.routes.map(r=>`<button class="route-tab ${state.routeSelection===r.id?'active':''}" data-action="route-select" data-id="${esc(r.id)}" aria-pressed="${state.routeSelection===r.id}">${esc(r.name)}</button>`).join('')}</div><div class="route-comparison ${allSame?'single':''}">${groups.map(routeCard).join('')}</div><div class="route-insight">${icon('shield')}<div><strong>${allSame?'이 출발지는 최단 경로가 가장 안전해요':same?'선택한 경로는 최단 경로와 같아요.':reduction>0?`최단 경로보다<br>위험노출 ${reduction}% 감소`:'선택한 경로의 거리와 위험노출을 비교해 보세요.'}</strong><p>${allSame?'최단·균형·안전 경로가 모두 같아요.':same?'거리·시간·위험노출이 같은 경로예요.':`${extra>=0?`${formatDistance(extra)} 더 걷고`:`${formatDistance(Math.abs(extra))} 덜 걷고`}, 위험노출 원점수 ${shortest.rawExposure} → ${comparison.rawExposure}<br>${api.isDemo?'예시 점수로 비교한 체험 결과예요.':'제보를 바탕으로 비교한 결과예요.'}`}</p></div></div><p class="route-disclaimer">${api.isDemo?'화면 체험용 예시 경로예요. 실제 보도망을 계산한 경로가 아니며, 실제 보행 안내에 사용하지 마세요.':'제보 기반 비교 결과이며 실제 현장 상황은 다를 수 있어요.'}<br>위험노출은 사고확률이 아니에요.</p>`:`<div class="route-empty">${icon('route')}<h3>통학길에 안심을 한 겹 더</h3><p>출발지를 선택하면 최단·균형·안전 경로의<br>거리, 시간, 위험노출을 비교할 수 있어요.</p></div>`}</div><div class="panel-footer"><button class="button secondary full" data-action="select-route-origin">${icon('pin')}지도에서 출발지 선택</button></div>`;
 }
 
 function notificationsPanel(){return `<div class="panel-scroll">${panelTop('위험지도로 돌아가기')}<h1 class="panel-title">제보 이후의 변화</h1><p class="panel-subtitle">소중한 제보가 어떻게 바뀌었는지 알려드려요.</p><div class="separator"></div>${errorBox(state.notificationError,'retry-notifications')}${state.notificationsLoading?loader():state.notifications.length?state.notifications.map(n=>`<button class="notification-card ${n.read?'':'unread'}" data-action="read-notification" data-id="${esc(n.id)}">${icon('bell')}<div><h3>${esc(n.title)}</h3><p>${esc(n.message)}</p><time>${relativeTime(n.createdAt)}</time></div>${n.read?'':'<span class="unread-dot" aria-label="읽지 않음"></span>'}</button>`).join(''):`<div class="empty-state">${icon('bell')}<h3>아직 새로운 알림이 없어요</h3><p>내 제보의 처리상태가 바뀌면<br>이곳에서 확인할 수 있어요.</p></div>`}</div><div class="panel-footer"><button class="button primary full" data-action="nav-map">${icon('map')}위험지도로 돌아가기</button></div>`;}
@@ -62,7 +64,7 @@ function render(){
   if(mapUI){mapUI.renderReports(state.view==='map'?filteredReports():state.reports,state.selectedId);}
   const routeLegend=$('#route-legend');
   routeLegend.hidden=state.view!=='routes'||!state.routes.length;
-  if(!routeLegend.hidden){const compare=state.routes.find(r=>r.id===(state.routeSelection==='shortest'?'safest':state.routeSelection));routeLegend.innerHTML=`<span><i class="route-line dashed"></i>최단 경로</span><span><i class="route-line ${compare?.id==='balanced'?'balanced':''}"></i>${esc(compare?.name || '안전')} 경로</span>`;}
+  if(!routeLegend.hidden){const selected=state.routes.find(r=>r.id===state.routeSelection),shortest=state.routes.find(r=>r.id==='shortest'),same=JSON.stringify(selected.coordinates)===JSON.stringify(shortest.coordinates);routeLegend.innerHTML=`${selected.id!=='shortest'&&!same?'<span><i class="route-line dashed"></i>최단 경로</span>':''}<span><i class="route-line ${esc(selected.id)}"></i>${esc(selected.name)} 경로</span>`;}
   if(lastRenderedView===state.view&&focusSelector)$(focusSelector,panel)?.focus({preventScroll:true});
   if($('.panel-scroll',panel))$('.panel-scroll',panel).scrollTop=previousScroll;
   lastRenderedView=state.view;
@@ -72,6 +74,7 @@ function setSelection(mode){state.selectionMode=mode;const node=$('#map-selectio
 function navigate(view,{force=false}={}){
   if((state.view==='report'||state.returnToReport)&&state.draftDirty&&view!=='report'&&!force){showConfirm({title:'작성하던 제보를 나갈까요?',message:'입력한 내용을 지우고 이동해요.',confirm:'나가기',onConfirm:()=>{state.draft=freshDraft();state.draftDirty=false;state.duplicates=[];navigate(view,{force:true});}});return;}
   if(view==='admin'&&state.user?.role!=='ADMIN'){toast('관리자 권한이 필요해요.',true);return;}
+  cancelRouteRequest();
   state.view=view;state.returnToReport=false;state.selectionMode=null;setSelection(null);if(view!=='routes')mapUI?.clearRoutes();
   if(view==='map'){state.selectedId=null;}render();history.replaceState(null,'',`#${view}`);panel.querySelector('.panel-scroll')?.scrollTo(0,0);
   if(view==='routes'&&state.routes.length)drawRoutes(false);
@@ -86,6 +89,8 @@ async function openReport(id,fromDraft=false){
 async function loadNotifications({open=false}={}){state.notificationsLoading=true;state.notificationError='';if(open)navigate('notifications');try{state.notifications=await api.notifications();}catch(error){state.notificationError=error.message;if(error.status===401)state.user=null;}finally{state.notificationsLoading=false;if(state.view==='notifications')render();else updateHeader();}}
 async function loadAdmin({open=false}={}){state.adminLoading=true;state.adminError='';if(open)navigate('admin');try{state.adminReports=await api.getReports({admin:true});}catch(error){state.adminError=error.message;}finally{state.adminLoading=false;if(state.view==='admin')render();}}
 function drawRoutes(fit=true){try{mapUI?.routes(state.routes,state.routeSelection,state.origin,{fit});}catch(error){state.routeError=error.message;state.routes=[];mapUI?.clearRoutes();render();}}
+function cancelRouteRequest(){routeRequest++;state.routeLoading=false;}
+function resetRoutes(){cancelRouteRequest();state.routes=[];state.routeError='';mapUI?.clearRoutes();}
 
 function showModal(content,kind){
   if(!modalKind)previousFocus=document.activeElement;modalKind=kind;
@@ -117,10 +122,11 @@ async function submitReport(){
 async function calculateRoutes(){
   if(state.routeLoading)return;
   if(!state.origin){state.routeError='출발지를 먼저 선택해 주세요.';render();return;}
+  const requestId=++routeRequest;
   state.routeLoading=true;state.routeError='';state.routes=[];mapUI?.clearRoutes();setSelection(null);render();
-  try{const response=await api.routes({lat:state.origin.lat,lng:state.origin.lng});if(!Array.isArray(response.routes)||!['shortest','balanced','safest'].every(id=>response.routes.some(r=>r.id===id)))throw new Error('세 가지 경로를 모두 받지 못했어요. 다시 조회해 주세요.');state.routes=response.routes;state.routeSelection='safest';if(state.view==='routes')drawRoutes();}
-  catch(error){state.routeError=error.message;}
-  finally{state.routeLoading=false;render();}
+  try{const response=await api.routes({lat:state.origin.lat,lng:state.origin.lng});if(requestId!==routeRequest||state.view!=='routes')return;if(!Array.isArray(response.routes)||!['shortest','balanced','safest'].every(id=>response.routes.some(r=>r.id===id)))throw new Error('세 가지 경로를 모두 받지 못했어요. 다시 조회해 주세요.');state.routes=response.routes;state.routeSelection='safest';drawRoutes();}
+  catch(error){if(requestId===routeRequest)state.routeError=error.message;}
+  finally{if(requestId===routeRequest){state.routeLoading=false;if(state.view==='routes')render();}}
 }
 
 document.addEventListener('input',event=>{
@@ -181,9 +187,9 @@ document.addEventListener('click',async event=>{
       case 'draft-time':state.draft.timeBand=value;state.draftDirty=true;render();break;
       case 'select-report-location':setSelection('report');break;
       case 'cancel-selection':setSelection(null);break;
-      case 'select-route-origin':setSelection('route');break;
+      case 'select-route-origin':resetRoutes();setSelection('route');render();break;
       case 'remove-photo':state.draft.photo=null;state.draft.photoFile=null;state.draftDirty=true;render();break;
-      case 'sample-start':state.origin={...starts.find(s=>s.id===id)};state.routes=[];state.routeError='';mapUI?.clearRoutes();setSelection(null);render();mapUI?.selectionPoint(state.origin,'route');mapUI?.flyTo(state.origin);break;
+      case 'sample-start':resetRoutes();state.origin={...starts.find(s=>s.id===id)};setSelection(null);render();mapUI?.selectionPoint(state.origin,'route');mapUI?.flyTo(state.origin);break;
       case 'calculate-routes':await calculateRoutes();break;
       case 'route-select':state.routeSelection=id;render();drawRoutes(false);break;
       case 'focus-report':{const report=state.reports.find(r=>r.id===id);if(report)mapUI?.focusReport(report);if(matchMedia('(max-width:760px)').matches)$('.map-section').scrollIntoView({behavior:'smooth',block:'start'});break;}
@@ -222,7 +228,7 @@ window.addEventListener('beforeunload',event=>{if(state.draftDirty){event.preven
 async function initialize(){
   if($('#area-school'))$('#area-school').textContent=config.school.name;
   if(!config.serverReachable)toast('서버에 연결하지 못했어요. 서버를 켜거나 주소 끝에 ?mock 을 붙여 확인해 주세요.',true);
-  try{mapUI=createMap({onReportClick:id=>{if(state.view==='report'&&state.draftDirty)return;openReport(id);},onSelect:async(pos,mode)=>{if(distance(config.school,pos)>config.school.radius){toast(`시범 지역(${config.school.name} 반경 ${config.school.radius}m) 안에서 선택해 주세요.`,true);return;}if(mode==='report'){state.draft.position=pos;state.draftDirty=true;state.reportError='';setSelection(null);render();mapUI.selectionPoint(pos);await checkDuplicates();}else{state.origin={...pos,name:'지도에서 선택한 위치'};state.routes=[];state.routeError='';setSelection(null);mapUI.clearRoutes();mapUI.selectionPoint(pos,'route');render();}toast('위치를 선택했어요.');if(matchMedia('(max-width:760px)').matches)panel.scrollIntoView({behavior:'smooth',block:'start'});},onTileError:()=>$('#map-error').hidden=false,onTileReady:()=>$('#map-error').hidden=true});}catch(error){$('#map-error').hidden=false;toast(error.message,true);}
+  try{mapUI=createMap({onReportClick:id=>{if(state.view==='report'&&state.draftDirty)return;openReport(id);},onSelect:async(pos,mode)=>{if(distance(config.school,pos)>config.school.radius){toast(`시범 지역(${config.school.name} 반경 ${config.school.radius}m) 안에서 선택해 주세요.`,true);return;}if(mode==='report'){state.draft.position=pos;state.draftDirty=true;state.reportError='';setSelection(null);render();mapUI.selectionPoint(pos);await checkDuplicates();}else{resetRoutes();state.origin={...pos,name:'지도에서 선택한 위치'};setSelection(null);mapUI.selectionPoint(pos,'route');render();}toast('위치를 선택했어요.');if(matchMedia('(max-width:760px)').matches)panel.scrollIntoView({behavior:'smooth',block:'start'});},onTileError:()=>$('#map-error').hidden=false,onTileReady:()=>$('#map-error').hidden=true});}catch(error){$('#map-error').hidden=false;toast(error.message,true);}
   try{state.user=await api.getSession();}catch(error){toast(error.message,true);}
   const initialView=location.hash.slice(1);if(['map','routes','guide'].includes(initialView))state.view=initialView;
   await refreshReports();if(state.user)await loadNotifications();

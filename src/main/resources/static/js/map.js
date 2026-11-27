@@ -52,14 +52,15 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady}) {
       if(originMarker)map.removeLayer(originMarker);
       const shortest=routes.find(r=>r.id==='shortest'), selected=routes.find(r=>r.id===selectedId);
       if(!shortest || !selected)throw new Error('경로 좌표를 확인할 수 없어요. 다시 조회해 주세요.');
-      const compare=selectedId==='shortest' ? routes.find(r=>r.id==='safest') : selected;
-      for(const route of [compare,shortest].filter(Boolean).sort((a,b)=>(a.id===selectedId?1:0)-(b.id===selectedId?1:0))) {
+      const same=JSON.stringify(shortest.coordinates)===JSON.stringify(selected.coordinates);
+      const visible=selectedId==='shortest'||same?[selected]:[shortest,selected];
+      for(const route of visible) {
         if(!Array.isArray(route.coordinates) || route.coordinates.length<2 || !route.coordinates.every(p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)))throw new Error('서버가 반환한 경로 좌표 형식이 올바르지 않아요.');
         L.polyline(route.coordinates,{color:'#fff',weight:route.id===selectedId?10:8,opacity:.95,interactive:false}).addTo(routeLayer);
-        L.polyline(route.coordinates,{color:route.color || '#17765b',weight:route.id===selectedId?6:4,opacity:route.id===selectedId?1:.8,dashArray:route.id==='shortest'?'7 7':undefined}).addTo(routeLayer).bindTooltip(`${escapeHtml(route.name)} 경로`);
+        L.polyline(route.coordinates,{color:route.color || '#17765b',weight:route.id===selectedId?6:4,opacity:route.id===selectedId?1:.8,dashArray:route.id===selectedId?null:'7 7'}).addTo(routeLayer).bindTooltip(`${escapeHtml(route.name)} 경로`);
       }
       originMarker=L.marker([origin.lat,origin.lng],{icon:L.divIcon({className:'origin-div-icon',html:'<span class="origin-marker">출발</span>',iconSize:[42,32],iconAnchor:[21,16]}),zIndexOffset:700}).addTo(map);
-      if(fit)map.fitBounds(L.latLngBounds([...shortest.coordinates,...(compare?.coordinates || [])]),{padding:[80,100],maxZoom:18});
+      if(fit)map.fitBounds(L.latLngBounds(visible.flatMap(route=>route.coordinates)),{padding:[80,100],maxZoom:18});
     },
     invalidate:()=>map.invalidateSize(),
     radius,

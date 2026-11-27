@@ -19,3 +19,4 @@
 @media(max-width:380px){.app-header{padding:0 12px}.brand{font-size:21px}.brand-symbol{height:32px;width:32px}.nav-button{padding:0 14px}.panel-scroll{padding-left:18px;padding-right:18px}.intro h1{font-size:23px}.area-label .area-divider,.area-label .area-divider+span{display:none}.pilot-mini{display:none!important}.map-legend{gap:9px;font-size:7px}.login-button{font-size:9px;padding:7px}.header-actions{gap:3px}}
 @media(max-width:760px){.app-header{position:sticky;top:0;z-index:1000}.map-section{scroll-margin-top:117px}.side-panel{scroll-margin-top:130px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.leaflet-zoom-animated{transition:none!important}}
+.route-comparison.single{grid-template-columns:1fr}.route-card-title{flex-wrap:wrap;overflow-wrap:anywhere}.route-line.shortest{border-color:#8b96a7}
