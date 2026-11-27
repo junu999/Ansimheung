@@ -53,6 +53,26 @@ test('사진: /api/photos/{id}, 미승인은 pending', () => {
   assert.equal(r.photoStatus, 'pending');
 });
 
+test('상세: 승인 사진과 여러 처리 이력의 상태·메모·시간을 유지한다', () => {
+  const history = [
+    { toStatus: 'RECEIVED', memo: null, createdAt: '2026-11-01T08:00:00+09:00' },
+    { toStatus: 'CHECKING', memo: '현장 확인 중', createdAt: '2026-11-02T09:00:00+09:00' },
+    { toStatus: 'RESOLVED', memo: '보도 정비 완료', createdAt: '2026-11-03T10:00:00+09:00' },
+  ];
+  const r = fromHazardDetail({ ...mock('hazard-detail.json'), photos: [{ id: 35, approved: true }], history }, school);
+  assert.equal(r.photo, '/api/photos/35');
+  assert.equal(r.photoStatus, 'approved');
+  assert.deepEqual(r.history, history.map((h, i) => ({ status: ['pending', 'reviewing', 'resolved'][i], result: h.memo || '', at: h.createdAt })));
+  assert.equal(r.result, '보도 정비 완료');
+});
+
+test('상세: 빈 사진·이력도 화면에서 빈 목록으로 다룬다', () => {
+  const r = fromHazardDetail({ ...mock('hazard-detail.json'), photos: [], history: [] }, school);
+  assert.equal(r.photo, null);
+  assert.deepEqual(r.history, []);
+  assert.equal(r.result, '');
+});
+
 test('묶기 후보: candidate 있으면 1개, null 이면 빈 배열', () => {
   const base = { lat: 37.3413, lng: 126.7436, type: TYPE.parking };
   assert.equal(fromNearby(mock('hazards-nearby.json'), base).length, 1);
