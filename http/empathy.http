@@ -1,0 +1,14 @@
+### 공감 추가·취소 (#26) — VS Code REST Client 확장으로 "Send Request" 클릭
+### 먼저 http/auth.http 로 로그인하고, 같은 XSRF-TOKEN 쿠키값을 아래 @xsrf 에 붙여 넣기
+### 둘 다 멱등: 여러 번 보내도 결과가 같음. 응답 {empathyCount, myEmpathy}
+
+@xsrf = 여기에_XSRF-TOKEN_쿠키값
+@hazardId = 1
+
+### 공감 → {empathyCount, myEmpathy: true}. 내 제보 지점은 400 OWN_HAZARD, 개선완료는 409, 하루 30회 넘으면 429
+POST http://localhost:8080/api/hazards/{{hazardId}}/empathy
+X-XSRF-TOKEN: {{xsrf}}
+
+### 공감 취소 → {empathyCount, myEmpathy: false}
+DELETE http://localhost:8080/api/hazards/{{hazardId}}/empathy
+X-XSRF-TOKEN: {{xsrf}}

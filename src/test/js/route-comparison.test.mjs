@@ -6,14 +6,16 @@ import { setTimeout as delay } from 'node:timers/promises';
 const mock = name => JSON.parse(readFileSync(new URL(`../../main/resources/static/mock/${name}.json`, import.meta.url)));
 const saved = Object.fromEntries(['document', 'window', 'location', 'history', 'matchMedia', 'fetch', 'setTimeout'].map(k => [k, globalThis[k]]));
 const nodes = new Map(), events = new Map(), mapEvents = new Map(), pending = [], requests = [], lines = [], timers = [];
+let listRequests = 0;
 const node = key => {
   if (!nodes.has(key)) nodes.set(key, { innerHTML: '', hidden: false, classList: { toggle() {} }, setAttribute() {}, querySelector: () => null, scrollIntoView() {}, contains: () => false });
   return nodes.get(key);
 };
 const layer = () => ({ addTo() { return this; }, bindTooltip() { return this; }, on() {}, clearLayers() {}, openTooltip() {} });
-const map = { setView() { return this; }, on: (name, fn) => mapEvents.set(name, fn), flyTo() {}, removeLayer() {}, fitBounds() {} };
+const bounds = { pad() { return this; }, getWest: () => 126.737, getSouth: () => 37.336, getEast: () => 126.749, getNorth: () => 37.345 };
+const map = { setView() { return this; }, on: (name, fn) => mapEvents.set(name, fn), getBounds: () => bounds, flyTo() {}, removeLayer() {}, fitBounds() {} };
 globalThis.document = { cookie: '', activeElement: null, querySelector: node, querySelectorAll: () => [], getElementById: node, addEventListener: (name, fn) => events.set(name, fn) };
-globalThis.window = { addEventListener() {}, L: { map: () => map, tileLayer: layer, circle: layer, marker: layer, layerGroup: layer, divIcon: o => o, latLngBounds: p => p, polyline: (coordinates, options) => { lines.push({ coordinates, ...options }); return layer(); } } };
+globalThis.window = { addEventListener() {}, L: { map: () => map, tileLayer: layer, circle: layer, marker: layer, layerGroup: layer, divIcon: o => o, latLng: () => ({ toBounds: () => bounds }), latLngBounds: p => p, polyline: (coordinates, options) => { lines.push({ coordinates, ...options }); return layer(); } } };
 globalThis.location = { search: '', hash: '' };
 globalThis.history = { replaceState(_state, _title, path) { assert.ok(!path.includes('?')); } };
 globalThis.matchMedia = () => ({ matches: false });
@@ -21,7 +23,7 @@ globalThis.setTimeout = (...args) => { const id = saved.setTimeout(...args); tim
 globalThis.fetch = async (url, options) => {
   if (url === '/api/config') return Response.json(mock('config'));
   if (url === '/api/me') return Response.json({ message: '로그인이 필요해요' }, { status: 401 });
-  if (url.startsWith('/api/hazards?')) return Response.json(mock('hazards'));
+  if (url.startsWith('/api/hazards?')) { listRequests++; return Response.json(mock('hazards')); }
   requests.push({ url, ...options });
   return new Promise(resolve => pending.push(resolve));
 };
@@ -33,6 +35,12 @@ const respond = (body, status = 200) => { assert.ok(pending.length); pending.shi
 const html = () => node('#panel').innerHTML;
 const colors = () => lines.filter(line => line.color !== '#fff');
 const chooseOrigin = async (lat = 37.3408, lng = 126.743) => { await click('select-route-origin'); mapEvents.get('click')({ latlng: { lat, lng } }); };
+
+test('지도 이동 재조회가 대기 중이어도 경로 화면으로 이동하면 취소한다', async () => {
+  mapEvents.get('moveend')(); const before = listRequests;
+  await click('nav-routes'); await delay(350);
+  assert.equal(listRequests, before);
+});
 
 test('출발지 없이 요청하지 않고, 지도 선택 후 POST로만 계산하며 중복 전송을 막는다', async () => {
   await click('nav-routes'); await click('calculate-routes');

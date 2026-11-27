@@ -1,6 +1,14 @@
 export const $ = (q, root = document) => root.querySelector(q);
 export const icon = (name, cls = '') => `<svg class="icon ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 로그인 후 복귀는 같은 사이트의 절대 경로만 허용한다.
+export function safeReturnPath(value, origin = location.origin) {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) return null;
+  try {
+    const url = new URL(value, origin);
+    return url.origin === origin ? `${url.pathname}${url.search}${url.hash}` : null;
+  } catch { return null; }
+}
 export function distance(a, b) {
   const rad = n => n * Math.PI / 180;
   const dLat = rad(b.lat-a.lat), dLng = rad(b.lng-a.lng);

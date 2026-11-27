@@ -40,12 +40,12 @@ public class GlobalExceptionHandler {
         return respond(e.code(), e.getMessage(), e.fields());
     }
 
-    /** @Valid @RequestBody 검증 실패 */
+    /** @Valid @RequestBody · @ModelAttribute(multipart) 검증 실패. 폼 값의 타입 변환 실패(type=FOO, lat=abc)는 기술 문구 대신 공통 문구 */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleBodyValidation(MethodArgumentNotValidException e) {
         Map<String, String> fields = new LinkedHashMap<>();
         for (FieldError error : e.getBindingResult().getFieldErrors()) {
-            fields.putIfAbsent(error.getField(), error.getDefaultMessage());
+            fields.putIfAbsent(error.getField(), error.isBindingFailure() ? "값이 올바르지 않아요" : error.getDefaultMessage());
         }
         return validation(fields);
     }
