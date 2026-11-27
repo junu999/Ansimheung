@@ -76,6 +76,7 @@ export function createMap({onReportClick,onSelect,onTileError,onTileReady,onMove
         meMarker=L.marker(latlng,{icon:L.divIcon({className:'me-div-icon',html:'<span class="me-dot"></span>',iconSize:[20,20],iconAnchor:[10,10]}),zIndexOffset:900,interactive:false,keyboard:false}).addTo(map);
       }else{meMarker.setLatLng(latlng);meAccuracy.setLatLng(latlng).setRadius(radius);}
     },
+    canShow(pos) {return map.options.maxBounds.contains([pos.lat,pos.lng]);},   // 지도가 움직일 수 있는 범위 (학교 중심 약 ±1.5km)
     hideMe() {if(meMarker){map.removeLayer(meMarker);map.removeLayer(meAccuracy);}meMarker=null;meAccuracy=null;},
     clearRoutes() {routeLayer.clearLayers();if(originMarker)map.removeLayer(originMarker);originMarker=null;},
     routes(routes,selectedId,origin,{fit=true}={}) {
