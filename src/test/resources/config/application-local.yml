@@ -3,3 +3,6 @@
 ansimheung:
   seed:
     enabled: false
+  upload:
+    dir: build/test-uploads      # 테스트 사진은 build/ 아래로 (gradle clean 으로 지워짐)
+    auto-approve: false          # 승인 전 비공개(P-08) 규칙을 테스트

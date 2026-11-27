@@ -188,13 +188,13 @@ class ReportApiTest {
     }
 
     @Test
-    void 비로그인은_401_CSRF_없으면_403_사진은_아직_무시() throws Exception {
+    void 비로그인은_401_CSRF_없으면_403_빈_사진_칸은_사진_없음() throws Exception {
         mockMvc.perform(form(valid()).with(csrf())).andExpect(status().isUnauthorized());
         mockMvc.perform(form(valid()).with(user(member))).andExpect(status().isForbidden());
 
-        MockMultipartFile photo = new MockMultipartFile("photo", "a.jpg", "image/jpeg", new byte[]{1, 2, 3});
-        mockMvc.perform(form(valid()).file(photo).with(user(member)).with(csrf()))
-                .andExpect(status().isCreated());   // 사진 저장은 #24
+        MockMultipartFile empty = new MockMultipartFile("photo", "", "application/octet-stream", new byte[0]);
+        mockMvc.perform(form(valid()).file(empty).with(user(member)).with(csrf()))
+                .andExpect(status().isCreated());   // 사진 검사·저장은 PhotoApiTest (#24)
         assertThat(hazards.count()).isEqualTo(1);
     }
 }
