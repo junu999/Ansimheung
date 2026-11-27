@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 위험 지점 조회. 공간 검색(bbox·반경 20m·가장 가까운 구간)은 각 기능 이슈에서
@@ -30,4 +31,19 @@ public interface HazardRepository extends JpaRepository<Hazard, Long> {
             """, nativeQuery = true)
     List<Hazard> findVisibleInBbox(@Param("west") double west, @Param("south") double south,
                                    @Param("east") double east, @Param("north") double north);
+
+    /**
+     * 묶기 후보 (#25, P-01): 반경 radiusM 안 · 같은 유형 · statuses(접수/확인중) · 숨김 아님 중 가장 가까운 1곳.
+     * 거리는 geography(미터). 개선완료 지점은 후보가 아니라서 근처에 제보하면 새 지점(재발생, P-02)
+     */
+    @Query(value = """
+            SELECT * FROM hazards
+            WHERE hidden = false AND type = :type AND status IN (:statuses)
+              AND ST_DWithin(location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :radiusM)
+            ORDER BY ST_Distance(location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography), id
+            LIMIT 1
+            """, nativeQuery = true)
+    Optional<Hazard> findMergeCandidate(@Param("lat") double lat, @Param("lng") double lng,
+                                        @Param("type") String type, @Param("statuses") List<String> statuses,
+                                        @Param("radiusM") double radiusM);
 }
