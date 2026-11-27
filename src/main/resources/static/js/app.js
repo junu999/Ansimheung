@@ -138,7 +138,7 @@ function showAuth(signup=false,email=''){
 }
 function showAccount(){showModal(`<div class="modal-brand">${icon('user')}</div><h2 id="modal-title">안녕하세요, ${esc(state.user.nickname)}님</h2><p>오늘도 우리 동네에 관심을 나눠주셔서 고마워요.</p><div class="account-chip"><span class="user-avatar">${esc(state.user.nickname.slice(0,1))}</span><span><strong>${esc(state.user.nickname)}</strong><small>${esc(state.user.email || '')} · ${state.user.role==='ADMIN'?'관리자':'이웃'}</small></span></div><div class="account-actions">${api.isDemo&&state.user.role==='ADMIN'?'<button class="button secondary full" data-action="demo-member">일반 회원으로 체험</button>':''}${state.user.role==='ADMIN'?'<button class="button primary full" data-action="open-admin">제보 관리 화면으로 이동</button>':''}${api.isDemo&&state.user.role!=='ADMIN'?`<button class="button secondary full" data-action="demo-admin">${icon('settings')}관리자 화면 체험</button>`:''}<button class="button quiet full" data-action="logout">로그아웃</button></div>`,'account');}
 let confirmation=null;
-function showConfirm(options){confirmation=options;showModal(`<div class="modal-brand">${icon('info')}</div><h2 id="modal-title">${esc(options.title)}</h2><p>${esc(options.message)}</p><form id="confirm-form">${options.reason?'<div class="form-section"><label class="field-label" for="confirm-reason">비공개 사유</label><textarea id="confirm-reason" name="reason" class="form-textarea" required maxlength="500" placeholder="제보자에게 전달할 사유를 입력해 주세요."></textarea></div>':''}<button type="submit" class="button primary full">${esc(options.confirm || '확인')}</button><button type="button" class="button quiet full" data-action="close-modal">취소</button></form>`,'confirm');}
+function showConfirm(options){confirmation=options;showModal(`<div class="modal-brand">${icon('info')}</div><h2 id="modal-title">${esc(options.title)}</h2><p>${esc(options.message)}</p><form id="confirm-form">${options.reason?'<div class="form-section"><label class="field-label" for="confirm-reason">비공개 사유</label><textarea id="confirm-reason" name="reason" class="form-textarea" required maxlength="500" placeholder="제보자에게 전달할 사유를 입력해 주세요."></textarea></div>':''}<button type="submit" class="button primary full">${esc(options.confirm || '확인')}</button>${options.secondary?`<button type="button" class="button secondary full" data-action="confirm-secondary">${esc(options.secondary)}</button>`:''}<button type="button" class="button quiet full" data-action="close-modal">취소</button></form>`,'confirm');}
 
 async function signIn(payload){state.user=await api.login(payload);closeModal();render();await refreshReports();await loadNotifications();toast(`${state.user.nickname}님, 반가워요.`);if(pendingAfterAuth){const after=pendingAfterAuth;pendingAfterAuth=null;authReturnPath=null;await after();}else if(authReturnPath){const path=authReturnPath;authReturnPath=null;location.assign(path);}}
 async function submitReport(){
@@ -148,6 +148,8 @@ async function submitReport(){
   if(distance(config.school,d.position)>config.school.radius){state.reportError=`시범 지역(${config.school.name} 반경 ${config.school.radius}m) 안에서 선택해 주세요.`;render();return;}
   if(!d.title.trim()||!d.description.trim()){state.reportError='제목과 위험 상황을 입력해 주세요.';render();return;}
   if(!state.user){requireLogin(submitReport);return;}
+  // 묶기(#25, P-02): 20m 안 같은 유형 지점이 있으면 조용히 새 지점을 만들지 않고 고르게 한다
+  if(state.duplicates.length&&!d.mergeHazardId){const dup=state.duplicates[0];showConfirm({title:'이미 제보된 곳이에요',message:`${config.mergeRadiusM}m 안에 같은 유형의 제보가 있어요. 같은 위험은 한 지점으로 모아요. 내 제보를 이 지점에 더하거나, 기존 제보에 공감해 주세요.`,confirm:'이 지점에 내 제보 더하기',onConfirm:()=>{state.draft.mergeHazardId=dup.id;return submitReport();},secondary:'기존 제보 보고 공감하기',onSecondary:()=>openReport(dup.id,true)});return;}
   state.submitting=true;state.reportError='';render();
   let created;
   try{created=await api.createReport({...d,...d.position});}
@@ -223,6 +225,7 @@ document.addEventListener('click',async event=>{
       case 'reset-filters':state.category='all';state.time='any';state.resolved=true;render();break;
       case 'open-report':await openReport(id);break;
       case 'duplicate-detail':await openReport(id,true);break;
+      case 'confirm-secondary':{const options=confirmation;closeModal();confirmation=null;await options?.onSecondary?.();break;}
       case 'draft-merge':state.draft.mergeHazardId=state.draft.mergeHazardId===id?null:id;state.draftDirty=true;render();break;
       case 'back-to-draft':state.view='report';state.returnToReport=false;render();mapUI?.selectionPoint(state.draft.position);break;
       case 'draft-category':state.draft.category=value;state.draftDirty=true;render();await checkDuplicates();break;
