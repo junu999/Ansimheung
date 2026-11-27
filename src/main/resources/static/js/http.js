@@ -70,6 +70,11 @@ async function mockRequest(method, url, body) {
   }
   const res = await fetch(`/mock/${route[2]}`);
   const data = await res.json();
+  if (method === 'POST' && path === '/api/reports' && body.get('mergeHazardId')) {   // 묶기(#25): 기존 지점에 더함
+    const hazardId = Number(body.get('mergeHazardId')), saved = mockHazards.get(hazardId);
+    if (saved) saved.reportCount += 1;
+    return { ...data, reportId: ++mockId, hazardId, merged: true };
+  }
   if (method === 'POST' && path === '/api/reports') {
     const template = await (await fetch('/mock/hazard-detail.json')).json();
     const reportId = ++mockId, hazardId = ++mockId;
