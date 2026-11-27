@@ -83,14 +83,15 @@
 | GET | `/api/hazards/nearby` | 회원 | `?lat=&lng=&type=` | `hazards-nearby.json` `{candidate \| null}` | #25 |
 | POST | `/api/reports` | 회원 | multipart `lat, lng, type, timeSlot, description?, photo?, mergeHazardId?` | 201 `reports-created.json` `{reportId, hazardId, merged}` | #11 (사진 #24, 묶기 #25) |
 | GET | `/api/photos/{id}` | 조건부 | — | image/jpeg·png. 미승인은 본인·ADMIN만, 아니면 404 | #24 (P1) |
-| POST | `/api/hazards/{id}/empathy` | 회원 | — | `empathy-on.json` `{empathyCount, myEmpathy:true}` (멱등) | #26 (P1) |
-| DELETE | `/api/hazards/{id}/empathy` | 회원 | — | `empathy-off.json` (멱등) | #26 (P1) |
+| POST | `/api/hazards/{id}/empathy` | 회원 | — | `empathy-on.json` `{empathyCount, myEmpathy:true}` (멱등) | #26 |
+| DELETE | `/api/hazards/{id}/empathy` | 회원 | — | `empathy-off.json` (멱등) | #26 |
 | GET | `/api/me/reports` | 회원 | `?page=&size=` | `me-reports.json` 페이지 | 범위 제외 |
 | PATCH | `/api/reports/{id}` | 회원(본인) | `{description?, timeSlot?}` | `{id, description, timeSlot}` | 범위 제외 |
 | DELETE | `/api/reports/{id}` | 회원(본인) | — | 204 | 범위 제외 |
 
 - 묶기(#25, P-01·P-02): `nearby` 후보 = 반경 20m(`ansimheung.merge.radius-m`) · 같은 유형 · 접수/확인중 · 숨김 아님 중 가장 가까운 1곳(`distanceM` 정수 m). 개선완료 근처는 후보 없음 → 새 지점. 시범 지역 밖은 `OUT_OF_AREA`.
 - `POST /api/reports`: `mergeHazardId` 없으면 항상 새 지점(`merged:false`), 있으면 그 지점에 제보 추가·제보 수 +1·재계산(`merged:true`, 지점 시간대는 첫 제보 그대로). 묶을 수 없으면 없음·숨김·반려 404 `NOT_FOUND` / 다른 유형·개선완료·20m 밖 409 `STATE_CONFLICT` / 이미 내가 제보한 지점 409 `DUP_REPORT`. 하루 한도(429 `LIMIT`)는 묶기도 셈.
+- 공감(#26, P-03): 바뀔 때만 공감 수 갱신·점수 재계산(추가는 마지막 활동도 갱신). 없음·숨김·반려 404 `NOT_FOUND` / 내 제보 지점 400 `OWN_HAZARD` / 개선완료에 추가 409 `STATE_CONFLICT`(취소는 가능) / 하루 30회(`ansimheung.limits.empathies-per-day`) 429 `LIMIT`.
 
 ### 경로
 | Method | 경로 | 권한 | 요청 | 응답 (mock) | 이슈 |
