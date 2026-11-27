@@ -114,6 +114,28 @@ function navigate(view,{force=false}={}){
   if(view==='routes'&&state.routes.length)drawRoutes(false);
   if(matchMedia('(max-width:760px)').matches&&view!=='map')panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
+// 내 위치 (시연: 학교 근처에서 GPS). 버튼을 누르면 계속 따라가며 파란 점으로 표시, 다시 누르면 끈다.
+// 지도 범위(학교 중심 약 ±1.5km) 안이면 시범 지역 밖이어도 보여 주고, 경로 출발지는 시범 지역 안에서만(P-05).
+// 좌표는 브라우저 안에서만 쓴다 (경로 요청 본문 외에는 서버로 보내지 않음, P-12)
+let myWatch=null, myFirstFix=false;
+function stopMyLocation(button){if(myWatch!==null)navigator.geolocation.clearWatch(myWatch);myWatch=null;mapUI?.hideMe();button?.setAttribute('aria-pressed','false');}
+function toggleMyLocation(button){
+  if(myWatch!==null){stopMyLocation(button);toast('내 위치 표시를 껐어요.');return;}
+  if(!navigator.geolocation){toast('이 브라우저에서는 위치를 확인할 수 없어요.',true);return;}
+  if(!window.isSecureContext){toast('위치는 https 주소로 접속했을 때만 확인할 수 있어요. 지도에서 직접 선택해 주세요.',true);return;}
+  myFirstFix=true;button.setAttribute('aria-pressed','true');
+  myWatch=navigator.geolocation.watchPosition(position=>{
+    const pos={lat:position.coords.latitude,lng:position.coords.longitude};
+    const away=Math.round(distance(pos,config.school)), inside=away<=config.school.radius;
+    if(!mapUI?.canShow(pos)){mapUI?.hideMe();if(myFirstFix){myFirstFix=false;toast(`현재 위치가 지도 범위 밖이에요 (${config.school.name}에서 약 ${(away/1000).toFixed(1)}km).`,true);}return;}
+    mapUI.showMe(pos,position.coords.accuracy);
+    if(!myFirstFix)return;
+    myFirstFix=false;mapUI.flyTo(pos);
+    if(state.view==='routes'&&inside){state.origin={...pos,name:'내 위치'};state.routes=[];state.routeError='';mapUI.clearRoutes();mapUI.selectionPoint(pos,'route');render();toast('내 위치를 출발지로 정했어요.');}
+    else if(!inside)toast(`내 위치를 표시하고 있어요. 시범지역(${config.school.radius}m) 밖이라 경로 출발지로는 쓸 수 없어요.`);
+    else toast('내 위치를 표시하고 있어요.');
+  },()=>{stopMyLocation(button);toast('위치 권한이 없거나 위치를 확인할 수 없어요. 지도에서 직접 선택할 수 있어요.',true);},{enableHighAccuracy:true,timeout:15000,maximumAge:5000});
+}
 // 공공데이터 레이어 (#34): 처음 켤 때 한 번만 불러온다
 let publicLoaded=false;
 async function togglePublicLayers(button){if(!mapUI)return;if(!publicLoaded){button.disabled=true;try{mapUI.renderPublicLayers(await api.publicLayers());publicLoaded=true;}catch(error){toast(error.message,true);return;}finally{button.disabled=false;}}button.setAttribute('aria-pressed',String(mapUI.togglePublicLayers()));}
@@ -292,7 +314,7 @@ document.addEventListener('click',async event=>{
       case 'zoom-out':mapUI?.zoomOut();break;
       case 'school-center':mapUI?.center();break;
       case 'retry-tiles':$('#map-error').hidden=true;mapUI?.retryTiles();break;
-      case 'my-location':if(!navigator.geolocation){toast('이 브라우저에서는 위치를 확인할 수 없어요.',true);break;}button.disabled=true;navigator.geolocation.getCurrentPosition(position=>{button.disabled=false;const pos={lat:position.coords.latitude,lng:position.coords.longitude};if(distance(pos,config.school)>config.school.radius){toast('현재 위치가 시범지역 밖이에요. 학교 주변 지도를 이용해 주세요.',true);return;}mapUI?.flyTo(pos);mapUI?.selectionPoint(pos,'route');toast('현재 위치로 이동했어요.');},()=>{button.disabled=false;toast('위치 권한이 없거나 위치를 확인할 수 없어요. 지도에서 직접 선택할 수 있어요.',true);},{enableHighAccuracy:false,timeout:8000,maximumAge:60000});break;
+      case 'my-location':toggleMyLocation(button);break;
     }
   }catch(error){toast(error.message || '처리하지 못했어요. 다시 시도해 주세요.',true);}
 });
